@@ -5,7 +5,7 @@ import yaml
 @dataclass
 class Config:
     profile: str
-
+    bot_token: str
 
 class ConfigLoader:
 

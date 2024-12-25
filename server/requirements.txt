@@ -1,3 +1,4 @@
 pyyaml
 openai
 Jinja2
+python-telegram-bot
