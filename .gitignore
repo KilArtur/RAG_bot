@@ -4,6 +4,8 @@
 #server/src/suai_project/endpoints/router_init.py
 #docker-compose.yml
 #uploaded_files
+output/
+processed_output/
 
 # secret info
 config-local.yml
