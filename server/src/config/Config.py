@@ -3,9 +3,25 @@ from dataclasses import dataclass, fields, is_dataclass
 import yaml
 
 @dataclass
+class GptConfig:
+    url: str
+    token: str
+    model: str
+
+@dataclass
+class DBConfig:
+    name: str
+    port: int
+    host: str
+    password: str
+    user: str
+
+@dataclass
 class Config:
     profile: str
     bot_token: str
+    gpt: GptConfig
+    db: DBConfig
 
 class ConfigLoader:
 
