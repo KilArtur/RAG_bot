@@ -43,7 +43,7 @@ def extract_action(output):
 
 def web_search(query: str):
     try:
-        query = query if "гуап" in query.lower() else "ГУАП"+query
+        query = query if "гуап" in query.lower() else "ГУАП "+query
         search_url = "https://www.google.com/search"
         params = {
             "q": query
@@ -81,28 +81,33 @@ def web_search(query: str):
         return f"Ошибка: {e}"
 
 async def action(history, max_iterations=5):
+    text = ""
     response = await gpt_service.fetch_completion_history(history)
     for _ in range(max_iterations):
         history.append({'role': 'assistant', 'content': response})
         trace = ""
         action_name, action_input = extract_action(response)
-
         if not action_name:
             trace += "Error: No action detected\n"
             history.append({'role': 'system', 'content': trace})
         elif action_name == "web_search":
-            observation = web_search(action_input)
-            trace += f"Observation: {observation}\n"
+            observation = web_search(action_input[1:-1])
+            trace += f"Observation: Информация:\n3. {observation}\n"
             history.append({'role': 'system', 'content': trace})
         elif action_name == "final_answer":
+            answer = action_input[1:-1]
+            history.append({'role': 'system', 'content': f"Какая информация помогла ответить на вопрос?"})
+            text=answer
+            # return answer
+        elif action_name == "helpful_infos":
             answer = action_input
-            history.append({'role': 'system', 'content': f"Final Answer: {answer}"})
-            return answer
+            # history.append({'role': 'system', 'content': f"Какая информация помогла ответить на вопрос?"})
+            return text, answer
         elif action_name == "insult_in_request":
             answer = "Ваш запрос содержит оскорбления. Пожалуйста, избегайте такого языка."
             history.append({'role': 'system', 'content': f"Final Answer: {answer}"})
             return answer
-        elif action_name == "bad_request":
+        elif action_name == "off_topic_question":
             answer = "Ваш запрос не относится к теме этого бота."
             history.append({'role': 'system', 'content': f"Final Answer: {answer}"})
             return answer
@@ -120,12 +125,12 @@ async def action(history, max_iterations=5):
 #     return action(response, history)
 
 async def process_query(query: str):
-    current_prompt = agent_prompt.render(user_question=query, data=[])
+    current_prompt = agent_prompt.render(user_question=query, data=["ВУЦ - это военно учебный центр", "Для поступления в ВУЦ вам неообходимо иметь паспорт и сведетельство об обучение"])
     response = await action([{'role': 'user', 'content': current_prompt}])
     print(response)
 
 if __name__ == "__main__":
-    query = "Кто такая Татарникова?"
+    query = "Какие документы нужны для поступления в ВУЦ?"
     asyncio.run(process_query(query))
     # print(response)
     # for pointer in response.pointers:
