@@ -1,7 +1,6 @@
 from jinja2 import Template
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
-import validators
 from services.GPTService import GPTService
 from services.RAGService import RAGService
 from services.registry import REGISTRY
@@ -88,12 +87,7 @@ class QueryService:
 
     async def answer_on_question(self, message, info, update, context):
         relevant_info = await self.check_info_for_answer(message, info)
-        # inline_keyboard = [
-        #     [InlineKeyboardButton(f"Ссылка {index}", url=quote(link))] for index, link in enumerate(relevant_info["links"])
-        # ]
-        # reply_markup = InlineKeyboardMarkup(inline_keyboard)
-        # await context.bot.send_message(chat_id=update.effective_chat.id,
-        #                                text=relevant_info["answer"])
+
         arr = []
         for index, link in enumerate(relevant_info["links"]):
             print(index, link)
@@ -101,24 +95,3 @@ class QueryService:
                 arr.append([InlineKeyboardButton(text=f"Ссылка {index + 1}", url=link)])
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text=relevant_info["answer"], reply_markup=InlineKeyboardMarkup(arr))
-        # if relevant_info:
-        #     # Если есть ответ, отправляем его
-        #     answer_text = "\n".join(relevant_info)
-        #     source_links = "\n".join([entry.link for entry in info if entry.text in relevant_info])
-        # else:
-        #     # Если нет ответа, ищем в интернете
-        #     search_results = await search_online(message, llm)
-        #
-        #     if search_results:
-        #         answer_text = "Мы нашли информацию по вашему запросу на следующих сайтах:\n" + "\n".join(search_results)
-        #         source_links = "\n".join(search_results)
-        #     else:
-        #         answer_text = "Извините, мы не нашли ответа на ваш вопрос."
-        #         source_links = ""
-        #
-        # # Отправляем ответ с ссылками
-        # await context.bot.send_message(chat_id=update.effective_chat.id, text=answer_text)
-        # if source_links:
-        #     await context.bot.send_message(chat_id=update.effective_chat.id, text="Источник(и):\n" + source_links)
-        #
-        # return True
