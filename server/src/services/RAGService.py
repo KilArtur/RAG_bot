@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 from dataclasses import dataclass
@@ -10,7 +11,9 @@ from whoosh.fields import Schema, TEXT, ID
 from whoosh.qparser import QueryParser, MultifieldParser, PhrasePlugin
 
 from config.Config import CONFIG
+from utils.logger import get_logger
 
+log = get_logger("RAGService")
 
 @dataclass
 class RAGInfo:
@@ -39,6 +42,7 @@ class RAGService:
             self.index = create_in(self.index_path, schema)
         else:
             self.index = open_dir(self.index_path)
+        log.info("RAG init")
 
     def vector_search(self, query: str):
         """Искать похожие тексты"""
@@ -56,6 +60,8 @@ class RAGService:
                 (query_embedding, self.top_k)
             )
             results = cur.fetchall()
+
+        log.info(f"vector search result: {str(json.dumps(results, indent=2, ensure_ascii=False))}")
         return [RAGInfo(id=row[0], text=row[1], link=row[2], rank=row[3]) for row in results]
 
     def text_search(self, query):
@@ -64,6 +70,7 @@ class RAGService:
             parser.add_plugin(PhrasePlugin())
             query_obj = parser.parse(query)
             results = searcher.search(query_obj, limit=self.top_k)
+            log.info(f"text search result:\n{results}")
             return [
                 RAGInfo(id=int(result["id"]), text=result["text"], link=result["link"], rank=result.score)
                 for result in results
@@ -87,6 +94,7 @@ class RAGService:
         writer = self.index.writer()
         writer.update_document(id=str(record_id), text=text, link=link)
         writer.commit()
+        log.info(f"Add to index text:\n{text}\nlink: {link}")
 
     def find(self, query):
         return self.vector_search(query), self.text_search(query)

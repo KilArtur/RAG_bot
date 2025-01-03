@@ -1,5 +1,5 @@
 import ast
-
+from markdownify import markdownify
 import requests
 from bs4 import BeautifulSoup
 from jinja2 import Template
@@ -11,11 +11,15 @@ from services.registry import REGISTRY
 import yaml
 import re
 
+from utils.logger import get_logger
+
 prompt_file_path = 'prompts.yml'
 with open(prompt_file_path, 'r', encoding='utf-8') as file:
     data = yaml.safe_load(file)
 
 agent_prompt = Template(data['agent_prompt'])
+
+log = get_logger("QueryService")
 
 
 class QueryService:
@@ -29,7 +33,9 @@ class QueryService:
         if match:
             action_name = match.group(1)
             action_input = match.group(2).strip()
+            log.info(f"call tool: {action_name}, arguments: {action_input}")
             return action_name, action_input
+        log.info(f"not found tool calling")
         return None, None
 
     def web_search(self, query: str):
@@ -66,11 +72,13 @@ class QueryService:
                 if 'text/html' in content_type:
                     page_response.encoding = 'utf-8'
 
-                    page_soup = BeautifulSoup(page_response.text, "html.parser")
-                    page_text = page_soup.get_text(separator="\n").strip()
+                    markdown_content = markdownify(response.text).strip()
 
-                    return RAGInfo(id =100, text=page_text, link=first_link, rank=1)
+                    markdown_content = re.sub(r"\n{3,}", "\n\n", markdown_content)
+
+                    return RAGInfo(id =100, text=markdown_content, link=first_link, rank=1)
         except Exception as e:
+            log.error(f"Query: {query}, web_search dosent work", exc_info=e)
             return RAGInfo(id =100, text=f"Ошибка: {e}", link='', rank=1)
 
     async def action(self, history, info: list[RAGInfo], max_iterations=5):
@@ -97,7 +105,7 @@ class QueryService:
                 answer = action_input
                 # history.append({'role': 'system', 'content': f"Какая информация помогла ответить на вопрос?"})
                 ids = ast.literal_eval(answer)
-                res = [info[id - 1] for id in ids]
+                res = [info[id - 1] for id in ids if id in range(len(info)+1)]
                 unique_links = set()
                 unique_res = []
 
@@ -117,20 +125,24 @@ class QueryService:
             else:
                 trace += f"Error: Unknown action: {action_name}\n"
                 history.append({'role': 'system', 'content': trace})
-
+            log.info(f"Agent trace: {trace}")
             response = await self.gpt_service.fetch_completion_history(history)
 
         return "Ответ не удалось получить за указанное число итераций.", []
 
     async def process(self, message: str, update: Update, context: CallbackContext):
         info = self.rag_service.find(message)
+        log.info(f"Find info: {info}")
         current_prompt = agent_prompt.render(user_question=message, data=info[0])
+        log.info(f"Agent prompt: {current_prompt}")
         response = await self.action([{'role': 'user', 'content': current_prompt}], info[0])
+        log.info(f"Agent response text:\n{response[0]}\nhelpful info: {response[1]}")
         buttons = []
         for index, rag_info in enumerate(response[1][:5]):
             print(index, rag_info)
             if "@" not in rag_info.link:
                 buttons.append(InlineKeyboardButton(text=f"Ссылка {index + 1}", url=rag_info.link))
+
         keyboard = []
         for i in range(0, len(buttons), 2):
             keyboard.append(buttons[i:i + 2])

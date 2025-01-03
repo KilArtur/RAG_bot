@@ -3,6 +3,26 @@ from dataclasses import dataclass, fields, is_dataclass
 import yaml
 
 @dataclass
+class LoggingConfigConsole:
+    enabled: bool
+
+@dataclass
+class LoggingConfigGraylog:
+    enabled: bool
+    host: str
+    port: int
+    udp: bool
+
+
+@dataclass
+class LoggingConfig:
+    console: LoggingConfigConsole
+    graylog: LoggingConfigGraylog
+    app_name: str
+    root_level: str
+    levels: dict[str, str]
+
+@dataclass
 class GptConfig:
     url: str
     token: str
@@ -22,6 +42,7 @@ class Config:
     bot_token: str
     gpt: GptConfig
     db: DBConfig
+    logging: LoggingConfig
 
 class ConfigLoader:
 
