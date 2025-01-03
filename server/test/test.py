@@ -1,7 +1,9 @@
+import pandas as pd
 import psycopg2
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
+from services.RAGService import RAGService
 
 DB_PARAMS = {
     "dbname": "vector_db",
@@ -65,4 +67,14 @@ def main():
     conn.close()
 
 if __name__ == "__main__":
-    main()
+    rag_service = RAGService()
+    print("load_rag")
+    path_to_csv = "/home/gerbylev/Загрузки/Telegram Desktop/output.csv"
+    df = pd.read_csv(path_to_csv).dropna()
+    print(df.info())
+    for index, row in df.iterrows():
+        print(index, row['link'])
+        if row['text'] != 'nan':
+            rag_service.add_record(row['text'], row['link'])
+
+    # main()

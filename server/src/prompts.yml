@@ -117,5 +117,5 @@ agent_prompt: |
   {{user_question}}  
   Информация:  
   {% for item in data -%}  
-  {{ loop.index }}. {{ item.replace("\n", " ") }}  
+  {{ loop.index }}. {{ item.text.replace("\n", " ") }}  
   {% endfor %}  

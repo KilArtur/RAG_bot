@@ -1,18 +1,22 @@
+import ast
+
+import requests
+from bs4 import BeautifulSoup
 from jinja2 import Template
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 from services.GPTService import GPTService
-from services.RAGService import RAGService
+from services.RAGService import RAGService, RAGInfo
 from services.registry import REGISTRY
 import yaml
+import re
 
 prompt_file_path = 'prompts.yml'
 with open(prompt_file_path, 'r', encoding='utf-8') as file:
     data = yaml.safe_load(file)
 
-validation_prompt = Template(data['validation_prompt'])
-find_useful_info_prompt = Template(data['find_useful_info'])
-answer_on_question_prompt = Template(data['answer_on_question'])
+agent_prompt = Template(data['agent_prompt'])
+
 
 class QueryService:
 
@@ -20,78 +24,116 @@ class QueryService:
         self.gpt_service: GPTService = REGISTRY.get(GPTService)
         self.rag_service: RAGService = REGISTRY.get(RAGService)
 
+    def extract_action(self, output):
+        match = re.search(r"Действие:\s*(\w+)\((.*?)\)", output)
+        if match:
+            action_name = match.group(1)
+            action_input = match.group(2).strip()
+            return action_name, action_input
+        return None, None
+
+    def web_search(self, query: str):
+        try:
+            query = query if "гуап" in query.lower() else "ГУАП " + query
+            search_url = "https://www.google.com/search"
+            params = {
+                "q": query
+            }
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+            }
+            response = requests.get(search_url, params=params, headers=headers)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "html.parser")
+
+            search_div = soup.find("div", id="search")
+
+            first_link_tags = search_div.find_all("a")
+            for first_link_tag in first_link_tags:
+                if not first_link_tag:
+                    continue
+
+                first_link: str = first_link_tag.get("href", "")
+
+                if not first_link:
+                    continue
+
+                if not first_link.startswith('http'):
+                    continue
+                page_response = requests.get(first_link, headers=headers)
+                page_response.raise_for_status()
+                content_type = page_response.headers.get('Content-Type', '')
+                if 'text/html' in content_type:
+                    page_response.encoding = 'utf-8'
+
+                    page_soup = BeautifulSoup(page_response.text, "html.parser")
+                    page_text = page_soup.get_text(separator="\n").strip()
+
+                    return RAGInfo(id =100, text=page_text, link=first_link, rank=1)
+        except Exception as e:
+            return RAGInfo(id =100, text=f"Ошибка: {e}", link='', rank=1)
+
+    async def action(self, history, info: list[RAGInfo], max_iterations=5):
+        text = ""
+        response = await self.gpt_service.fetch_completion_history(history)
+        for _ in range(max_iterations):
+            history.append({'role': 'assistant', 'content': response})
+            trace = ""
+            action_name, action_input = self.extract_action(response)
+            if not action_name:
+                trace += "Error: No action detected\n"
+                history.append({'role': 'system', 'content': trace})
+            elif action_name == "web_search":
+                observation = self.web_search(action_input[1:-1])
+                info.append(observation)
+                trace += f"Observation: Информация:\n{len(info)}. {observation.text}\n"
+                history.append({'role': 'system', 'content': trace})
+            elif action_name == "final_answer":
+                answer = action_input[1:-1]
+                history.append({'role': 'system', 'content': f"Какая информация помогла ответить на вопрос?"})
+                text = answer
+                # return answer
+            elif action_name == "helpful_infos":
+                answer = action_input
+                # history.append({'role': 'system', 'content': f"Какая информация помогла ответить на вопрос?"})
+                ids = ast.literal_eval(answer)
+                res = [info[id - 1] for id in ids]
+                unique_links = set()
+                unique_res = []
+
+                for obj in res:
+                    if obj.link not in unique_links:
+                        unique_links.add(obj.link)
+                        unique_res.append(obj)
+                return text, unique_res
+            elif action_name == "insult_in_request":
+                answer = "Ваш запрос содержит оскорбления. Пожалуйста, избегайте такого языка."
+                history.append({'role': 'system', 'content': f"Final Answer: {answer}"})
+                return answer, []
+            elif action_name == "off_topic_question":
+                answer = "Ваш запрос не относится к теме этого бота."
+                history.append({'role': 'system', 'content': f"Final Answer: {answer}"})
+                return answer, []
+            else:
+                trace += f"Error: Unknown action: {action_name}\n"
+                history.append({'role': 'system', 'content': trace})
+
+            response = await self.gpt_service.fetch_completion_history(history)
+
+        return "Ответ не удалось получить за указанное число итераций.", []
 
     async def process(self, message: str, update: Update, context: CallbackContext):
-        if await self.query_validation(message, update, context):
-            return
         info = self.rag_service.find(message)
-        await self.answer_on_question(message, info, update, context)
+        current_prompt = agent_prompt.render(user_question=message, data=info[0])
+        response = await self.action([{'role': 'user', 'content': current_prompt}], info[0])
+        buttons = []
+        for index, rag_info in enumerate(response[1][:5]):
+            print(index, rag_info)
+            if "@" not in rag_info.link:
+                buttons.append(InlineKeyboardButton(text=f"Ссылка {index + 1}", url=rag_info.link))
+        keyboard = []
+        for i in range(0, len(buttons), 2):
+            keyboard.append(buttons[i:i + 2])
 
-
-    async def query_validation(self, message, update: Update, context: CallbackContext):
-        current_prompt = validation_prompt.render(message=message)
-        response = await self.gpt_service.fetch_completion(current_prompt,
-                                                           {"max_tokens": 100})
-        lines = response.split("\n")
-        profanity_check = lines[0].split()[1]
-        relevance_check = lines[1].split()[1]
-
-        if profanity_check.lower() == "да":
-            await context.bot.send_message(chat_id=update.effective_chat.id, text="Ваш запрос содержит оскорбления. Пожалуйста, избегайте такого языка.")
-            return True
-        elif relevance_check.lower() == "нет":
-            await context.bot.send_message(chat_id=update.effective_chat.id,
-                                           text="Ваш запрос не относится к теме этого бота.")
-            return True
-        return False
-
-    async def check_info_for_answer(self, message, info):
-        data = []
-        data.extend(info[0])
-        data.extend(info[1])
-        current_prompt = find_useful_info_prompt.render(message=message, data=data)
-
-        response = await self.gpt_service.fetch_completion(current_prompt,
-                                                           {"max_tokens": 250})
-
-        def parse_response(response):
-            if "Нет ответа" in response:
-                return {"found": False, "query": response.split(":")[-1].strip()}
-            else:
-                try:
-                    indices = [int(num.strip()) for num in response.split(",") if num.strip().isdigit()]
-                    return {"found": True, "indices": indices}
-                except ValueError:
-                    return {"found": False, "error": "Некорректный формат ответа"}
-
-        parsed_response = parse_response(response)
-        if parsed_response["found"]:
-            indices = parsed_response["indices"]
-            fragments = [data[i - 1] for i in indices]
-            return {
-                "answer": await self.generate_answer(message, fragments),
-                "links": [fragment.link for fragment in fragments],
-                "source": "Локальная информация"
-            }
-        # else:
-            # internet_result = await self.search_online(parsed_response.get("query", message))
-            # return {
-            #     "answer": internet_result,
-            #     "source": "Интернет"
-            # }
-
-    async def generate_answer(self, message, fragments):
-        current_prompt = answer_on_question_prompt.render(message=message, data = fragments)
-        response = await self.gpt_service.fetch_completion(current_prompt, {"max_tokens": 300})
-        return response.strip()
-
-    async def answer_on_question(self, message, info, update, context):
-        relevant_info = await self.check_info_for_answer(message, info)
-
-        arr = []
-        for index, link in enumerate(relevant_info["links"]):
-            print(index, link)
-            if "@" not in link:
-                arr.append([InlineKeyboardButton(text=f"Ссылка {index + 1}", url=link)])
         await context.bot.send_message(chat_id=update.effective_chat.id,
-                                       text=relevant_info["answer"], reply_markup=InlineKeyboardMarkup(arr))
+                                       text=response[0], reply_markup=InlineKeyboardMarkup(keyboard))
