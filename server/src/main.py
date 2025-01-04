@@ -17,10 +17,7 @@ request_id = 0
 async def start(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     user_id = update.effective_user.id
-    await context.bot.send_message(
-        chat_id=chat_id,
-        text="Введите 'admin' для авторизации."
-    )
+
 
 async def handle_message(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
