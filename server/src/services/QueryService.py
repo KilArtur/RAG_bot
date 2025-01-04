@@ -72,7 +72,12 @@ class QueryService:
                 if 'text/html' in content_type:
                     page_response.encoding = 'utf-8'
 
-                    markdown_content = markdownify(response.text).strip()
+                    soup = BeautifulSoup(page_response.text, 'html.parser')
+                    for img in soup.find_all('img'):
+                        img.decompose()  # Удаляет тег изображения из дерева DOM
+
+                    # Преобразование оставшегося HTML в Markdown
+                    markdown_content = markdownify(str(soup)).strip()
 
                     markdown_content = re.sub(r"\n{3,}", "\n\n", markdown_content)
 
