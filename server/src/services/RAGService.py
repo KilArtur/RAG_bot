@@ -1,14 +1,19 @@
+import json
 import os
 import tempfile
 from dataclasses import dataclass
 from sentence_transformers import SentenceTransformer
 import psycopg2
+from whoosh.analysis import StemmingAnalyzer
+from whoosh.filedb.filestore import FileStorage
 from whoosh.index import create_in, open_dir
 from whoosh.fields import Schema, TEXT, ID
-from whoosh.qparser import QueryParser
+from whoosh.qparser import QueryParser, MultifieldParser, PhrasePlugin
 
 from config.Config import CONFIG
+from utils.logger import get_logger
 
+log = get_logger("RAGService")
 
 @dataclass
 class RAGInfo:
@@ -37,6 +42,7 @@ class RAGService:
             self.index = create_in(self.index_path, schema)
         else:
             self.index = open_dir(self.index_path)
+        log.info("RAG init")
 
     def vector_search(self, query: str):
         """Искать похожие тексты"""
@@ -54,13 +60,17 @@ class RAGService:
                 (query_embedding, self.top_k)
             )
             results = cur.fetchall()
+
+        log.info(f"vector search result: {str(json.dumps(results, indent=2, ensure_ascii=False))}")
         return [RAGInfo(id=row[0], text=row[1], link=row[2], rank=row[3]) for row in results]
 
     def text_search(self, query):
         with self.index.searcher() as searcher:
-            query_parser = QueryParser("text", schema=self.index.schema)
-            query_obj = query_parser.parse(query)
+            parser = MultifieldParser(["text"], schema=self.index.schema)
+            parser.add_plugin(PhrasePlugin())
+            query_obj = parser.parse(query)
             results = searcher.search(query_obj, limit=self.top_k)
+            log.info(f"text search result:\n{results}")
             return [
                 RAGInfo(id=int(result["id"]), text=result["text"], link=result["link"], rank=result.score)
                 for result in results
@@ -84,6 +94,7 @@ class RAGService:
         writer = self.index.writer()
         writer.update_document(id=str(record_id), text=text, link=link)
         writer.commit()
+        log.info(f"Add to index text:\n{text}\nlink: {link}")
 
     def find(self, query):
         return self.vector_search(query), self.text_search(query)
@@ -93,3 +104,53 @@ class RAGService:
         formatted_text = 'query: ' + text
         embedding = self.model.encode(formatted_text, normalize_embeddings=True)
         return embedding.tolist()
+
+if __name__ == "__main__":
+    from whoosh.index import create_in
+    from whoosh.fields import Schema, ID, TEXT
+    from whoosh.qparser import QueryParser
+    import os
+
+    # Схема с измененным текстовым полем
+    schema = Schema(
+        id=ID(stored=True, unique=True),
+        text=TEXT(stored=True, analyzer=None),  # Анализатор не используется для простоты
+        link=ID(stored=True)
+    )
+
+    # Создание индекса
+    if not os.path.exists("indexdir"):
+        os.mkdir("indexdir")
+
+    ix = create_in("indexdir", schema)
+
+    # Добавление документов
+    writer = ix.writer()
+    writer.add_document(id="1", text="The quick brown fox jumps over the lazy dog.", link="http://example.com/1")
+    writer.add_document(id="2", text="Python is a versatile programming language.", link="http://example.com/2")
+    writer.add_document(id="3", text="Search engines like Whoosh are very useful.", link="http://example.com/3")
+    writer.add_document(id="4", text="Four score and seven years ago.", link="http://example.com/4")
+    writer.commit()
+
+
+    # Функция поиска
+    def search(query_str):
+        with ix.searcher() as searcher:
+            # Использование QueryParser для поля text
+            parser = QueryParser("text", ix.schema)
+            query = parser.parse(query_str)
+
+            print(f"Parsed Query: {query}")  # Для отладки
+            results = searcher.search(query)
+
+            # Вывод результатов
+            if results:
+                for result in results:
+                    print(f"ID: {result['id']}, Link: {result['link']}, Text: {result['text']}")
+            else:
+                print("Ничего не найдено.")
+
+
+    # Пример запроса из 4 слов
+    query_string = "Python versatile useful language"
+    search(query_string)
