@@ -123,6 +123,6 @@ class RAGService:
         return result
 
     def _get_embedding(self, text: str, is_query=True) -> list:
-        formatted_text =  text if is_query else text
+        formatted_text = 'query: ' + text if is_query else text
         embedding = self.model.encode(formatted_text, normalize_embeddings=True)
         return embedding.tolist()
