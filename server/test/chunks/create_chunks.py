@@ -58,7 +58,7 @@ async def main(file_path, output_csv):
     results = []  # Список для сбора данных
 
     with open(file_path, 'r') as file:
-        links = [line.strip() for line in file if line.strip()][:5]
+        links = [line.strip() for line in file if line.strip()]
 
     tasks = [process_link(link, semaphore, results) for link in links]
     await asyncio.gather(*tasks)
