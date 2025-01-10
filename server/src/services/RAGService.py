@@ -119,7 +119,7 @@ class RAGService:
     def find(self, query: str):
         result = []
         result.extend(self.vector_search(query))
-        result.extend(self.vector_search(query))
+        result.extend(self.text_search(query))
         return result
 
     def _get_embedding(self, text: str, is_query=True) -> list:
