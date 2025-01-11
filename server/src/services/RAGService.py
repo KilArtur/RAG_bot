@@ -19,7 +19,7 @@ class RAGInfo:
 
 class RAGService:
     def __init__(self):
-        self.model = SentenceTransformer("intfloat/multilingual-e5-large")
+        self.model = SentenceTransformer("intfloat/multilingual-e5-small")
         self.top_k = 20
         username = "elastic"  # замените на свой логин
         password = "password"  # замените на свой пароль
