@@ -1,0 +1,37 @@
+#version: '3.8'
+#
+#services:
+#  postgres:
+#    image: ankane/pgvector
+#    container_name: postgres_pgvector
+#    environment:
+#      POSTGRES_USER: postgres
+#      POSTGRES_PASSWORD: postgres
+#      POSTGRES_DB: vector_db
+#    ports:
+#      - "5436:5432"
+version: '3.7'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - "discovery.type=single-node"
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      - "ELASTIC_PASSWORD=password"
+      # Выберите http или https
+      - "xpack.security.enabled=false" # true для HTTPS, false для HTTP
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-s", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  es_data:
