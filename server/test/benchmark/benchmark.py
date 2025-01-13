@@ -30,7 +30,7 @@ class Benchmark:
         async with self.semaphore:
             loop = asyncio.get_running_loop()
             return await loop.run_in_executor(
-                None, self.rag_service.vector_search, question
+                None, self.rag_service.find, question
             )
 
     async def metrics(self):
