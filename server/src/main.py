@@ -55,28 +55,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
-class BotClass:
-
-    def start(self):
-        get_user = ""
-        action = get_user.pipeline()
-
-
-    def __init__(self):
-        application = Application.builder().token(CONFIG.bot_token).build()
-
-        application.add_handler(CommandHandler("start", start))
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-        application.add_handler(CallbackQueryHandler(handle_callback))
-
-        application.run_polling(allowed_updates=Update.ALL_TYPES)
-
-class UserModule:
-    chat_id = ""
-    user = UserClass()
-
-
-    def start(self):
-        action
