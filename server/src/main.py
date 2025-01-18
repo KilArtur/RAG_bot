@@ -1,7 +1,9 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, filters, Application, \
     CallbackQueryHandler
+from twisted.internet.defer import passthru
 
+from bot.BaseBotModule import BaseBotModule
 from config.Config import CONFIG
 from services.GPTService import GPTService
 from services.QueryService import QueryService
@@ -38,7 +40,6 @@ async def handle_callback(update: Update, context: CallbackContext):
 
 def main() -> None:
     """Start the bot."""
-
     REGISTRY.put(GPTService())
     REGISTRY.put(RAGService())
     REGISTRY.put(QueryService())
