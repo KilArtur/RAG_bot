@@ -1,8 +1,0 @@
-CREATE EXTENSION IF NOT EXISTS vector;
-
-CREATE TABLE IF NOT EXISTS texts (
-    id SERIAL PRIMARY KEY,
-    text TEXT NOT NULL,
-    embedding VECTOR(1024),
-    link TEXT
-);
