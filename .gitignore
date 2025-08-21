@@ -175,3 +175,7 @@ cython_debug/
 
 # claude
 CLAUDE.md
+
+# data & config
+data
+server/src/config.yml

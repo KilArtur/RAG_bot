@@ -1,0 +1,26 @@
+llm:
+  url: https://openrouter.ai/api/v1
+  model: meta-llama/llama-3.1-8b-instruct
+  token:
+
+db:
+  name: str
+  port: 0
+  host: str
+  password: str
+  user: str
+
+logging:
+    app_name: RAG-bot
+    graylog:
+      enabled: false
+      udp: false
+      host: 0.0.0.0
+      port: 12201
+    console:
+      enabled: true
+    root_level: INFO
+    levels:
+      httpx: WARN
+      openai: WARN
+      uvicorn.access: WARN
