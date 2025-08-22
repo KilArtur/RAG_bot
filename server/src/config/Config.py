@@ -23,23 +23,24 @@ class LoggingConfig:
     levels: dict[str, str]
 
 @dataclass
+class QdrantConfig:
+    host: str
+    port: int
+    collection_name: str
+    model_name: str
+    vector_size: int
+    top_samples: int
+
+@dataclass
 class LLMConfig:
     url: str
     token: str
     model: str
 
 @dataclass
-class DBConfig:
-    name: str
-    port: int
-    host: str
-    password: str
-    user: str
-
-@dataclass
 class Config:
     llm: LLMConfig
-    db: DBConfig
+    qdrant: QdrantConfig
     logging: LoggingConfig
 
 class ConfigLoader:

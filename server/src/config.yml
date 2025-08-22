@@ -2,13 +2,13 @@ llm:
   url: https://openrouter.ai/api/v1
   model: meta-llama/llama-3.1-8b-instruct
   token:
-
-db:
-  name: str
-  port: 0
-  host: str
-  password: str
-  user: str
+qdrant:
+  host: localhost
+  port: 6333
+  collection_name: documents
+  model_name: all-MiniLM-L6-v2
+  vector_size: 384
+  top_samples: 10
 
 logging:
     app_name: RAG-bot

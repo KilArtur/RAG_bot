@@ -9,7 +9,6 @@ from services.context_var import request_id_var
 
 class GraylogFormatter(logging.Formatter):
     def format(self, record):
-        # Добавляем app_name как дополнительное поле
         record.app_name = CONFIG.logging.app_name
         record.request_id = request_id_var.get()
         return super().format(record)
@@ -44,8 +43,6 @@ def get_logger(name) -> logging:
 
     logger.propagate = False  # Global logger should not print messages again.
 
-    # Avoiding log duplicates: do not add handlers again to already initialized logger
-    # https://stackoverflow.com/questions/7173033/duplicate-log-output-when-using-python-logging-module
     if len(logger.handlers) != 0:
         return logger
 
