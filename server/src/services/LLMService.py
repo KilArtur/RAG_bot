@@ -17,9 +17,8 @@ class LLMService:
         self.request_counter = 0
         self.total_input_token = 0
         self.total_output_token = 0
-        log.info("LLMSservice init")
 
-    async def fetch_completion(self, prompt: str, args=None) -> str:
+    async def fetch_completion(self, prompt: str, response_format = None, args=None) -> str:
         self.request_counter += 1
         request_id = self.request_counter
         log.info(f"Запрос к llm ({request_id}): {prompt}")
@@ -27,7 +26,7 @@ class LLMService:
         counter = 0
         while True:
             try:
-                res = await self.__fetch_completion(prompt, args or {})
+                res = await self.__fetch_completion(prompt, response_format, args or {})
                 log.info(f"Ответ от llm ({request_id}): {res}")
 
                 return res
@@ -39,12 +38,13 @@ class LLMService:
                 else:
                     raise e
 
-    async def __fetch_completion(self, prompt: str, args) -> str:
+    async def __fetch_completion(self, prompt: str, response_format: None, args) -> str:
         res = await self.openai.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model=CONFIG.llm.model,
             temperature=0,
             top_p=0.5,
+            response_format = response_format,
             stream=False,
             **args
         )
