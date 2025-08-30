@@ -56,7 +56,6 @@ class LLMService:
             else:
                 log.warning("No usage info")
 
-            # Проверяем что ответ есть
             if not res.choices or not res.choices[0].message or not res.choices[0].message.content:
                 log.error("LLM returned empty response")
                 raise Exception("LLM returned empty response")
@@ -65,7 +64,10 @@ class LLMService:
             if not content.strip():
                 log.error("LLM returned empty content")
                 raise Exception("LLM returned empty content")
-                
+
+            content = self._sanitize_content(content)
+            
+            log.debug(f"Обработанный контент, длина: {len(content)}")
             return content
 
         except Exception as e:
@@ -113,3 +115,20 @@ class LLMService:
             pass
 
         return str(res.choices[0].message.content)
+    
+    def _sanitize_content(self, content: str) -> str:
+        if not content:
+            return content
+
+        content = content.replace('\x00', '')
+        content = content.replace('\ufeff', '')  # BOM символ
+
+        content = content.strip()
+
+        try:
+            json.dumps(content, ensure_ascii=False)
+        except (TypeError, ValueError) as e:
+            log.warning(f"Проблема с JSON сериализацией: {e}")
+            content = ''.join(char for char in content if ord(char) < 128 or (0x400 <= ord(char) <= 0x4FF))
+        
+        return content

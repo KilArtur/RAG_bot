@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Bot</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="assets/css/reset.css">
+    <link rel="stylesheet" href="assets/css/variables.css">
+    <link rel="stylesheet" href="assets/css/layout.css">
+    <link rel="stylesheet" href="assets/css/components.css">
+    <link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="logo">RAG Bot</h1>
+            </div>
+            <nav class="sidebar-nav">
+                <button id="newChatBtn" class="btn btn--new-chat" type="button">
+                    <span class="btn__icon">+</span>
+                    <span class="btn__text">Новый чат</span>
+                </button>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="chat-layout">
+                <!-- Messages Container with Scroll -->
+                <div class="messages-wrapper">
+                    <div id="messagesContainer" class="messages-container" role="log" aria-live="polite">
+                        <!-- Messages will be inserted here -->
+                    </div>
+                </div>
+                
+                <!-- Fixed Input Area -->
+                <div class="input-area">
+                    <form id="messageForm" class="message-form" role="form">
+                        <div class="input-wrapper">
+                            <label for="messageInput" class="sr-only">Введите ваше сообщение</label>
+                            <textarea 
+                                id="messageInput" 
+                                class="message-input"
+                                placeholder="Отправьте сообщение..." 
+                                rows="1"
+                                maxlength="2000"
+                                aria-describedby="input-help"
+                                required
+                            ></textarea>
+                            
+                            <button 
+                                id="sendBtn" 
+                                class="btn btn--send" 
+                                type="submit"
+                                aria-label="Отправить сообщение"
+                                disabled
+                            >
+                                <svg class="btn__icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M2.5 10L17.5 10M17.5 10L11.667 4.167M17.5 10L11.667 15.833" 
+                                          stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="inputHelp" class="input-help" aria-describedby="messageInput">
+                            Нажмите Enter для отправки, Shift+Enter для новой строки
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="loading-overlay" hidden>
+        <div class="spinner" aria-hidden="true"></div>
+        <span class="loading-text">Обрабатываю запрос...</span>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script type="module" src="assets/js/main.js?v=1.1"></script>
+</body>
+</html>

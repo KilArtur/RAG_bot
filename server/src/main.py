@@ -1,10 +1,14 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+import json
 
 from endpoints.api import main_router
 
 app = FastAPI()
+
+app.default_response_class = JSONResponse
 
 app.add_middleware(
     CORSMiddleware,
@@ -17,4 +21,10 @@ app.add_middleware(
 app.include_router(main_router, prefix="/api")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="localhost", port=8000)
+    uvicorn.run(
+        app, 
+        host="localhost", 
+        port=8000,
+        timeout_keep_alive=300,
+        timeout_graceful_shutdown=30
+    )
