@@ -178,4 +178,5 @@ CLAUDE.md
 
 # data & config
 data
-server/src/config.yml
+./server/src/config.yml
+.yml

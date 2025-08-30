@@ -1,7 +1,8 @@
 llm:
   url: https://openrouter.ai/api/v1
-  model: meta-llama/llama-3.1-8b-instruct
+  model: qwen/qwen3-30b-a3b-instruct-2507
   token:
+
 qdrant:
   host: localhost
   port: 6333

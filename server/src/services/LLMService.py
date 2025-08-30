@@ -39,24 +39,41 @@ class LLMService:
                     raise e
 
     async def __fetch_completion(self, prompt: str, response_format: None, args) -> str:
-        res = await self.openai.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model=CONFIG.llm.model,
-            temperature=0,
-            top_p=0.5,
-            response_format = response_format,
-            stream=False,
-            **args
-        )
+        try:
+            res = await self.openai.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model=CONFIG.llm.model,
+                temperature=0,
+                top_p=0.5,
+                response_format = response_format,
+                stream=False,
+                **args
+            )
 
-        if res.usage:
-            self.total_input_token += int(res.usage.prompt_tokens)
-            self.total_output_token += int(res.usage.completion_tokens)
-        else:
-            log.warning("No usage info")
-            pass
+            if res.usage:
+                self.total_input_token += int(res.usage.prompt_tokens)
+                self.total_output_token += int(res.usage.completion_tokens)
+            else:
+                log.warning("No usage info")
 
-        return str(res.choices[0].message.content)
+            # Проверяем что ответ есть
+            if not res.choices or not res.choices[0].message or not res.choices[0].message.content:
+                log.error("LLM returned empty response")
+                raise Exception("LLM returned empty response")
+
+            content = str(res.choices[0].message.content)
+            if not content.strip():
+                log.error("LLM returned empty content")
+                raise Exception("LLM returned empty content")
+                
+            return content
+
+        except Exception as e:
+            log.error(f"Ошибка в __fetch_completion: {str(e)}")
+            # Если это JSON ошибка, значит проблема с парсингом ответа OpenAI
+            if "Expecting value" in str(e) or "JSON" in str(e):
+                log.error("JSON parsing error in OpenAI response - возможно ответ обрезан")
+            raise e
 
     async def fetch_completion_history(self, history, args=None) -> str:
         self.request_counter += 1
