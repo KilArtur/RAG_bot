@@ -69,7 +69,7 @@ async def question_logic(question: str, user_id: Optional[str] = None):
             
             return response_data
 
-    scenario_name = scenario_service.detect_scenario_trigger(question)
+    scenario_name = await scenario_service.detect_scenario_trigger(question)
     if scenario_name:
         scenario_response = scenario_service.start_scenario(user_id, scenario_name)
         response_data = {
