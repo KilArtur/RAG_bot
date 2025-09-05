@@ -20,6 +20,15 @@ def get_scenario_service():
 async def handle_scenario_message(user_id: str, message: str):
     try:
         scenario_service = get_scenario_service()
+        
+        # Проверяем команду остановки тестирования
+        if scenario_service.detect_stop_command(message):
+            stop_message = scenario_service.stop_scenario_with_message(user_id)
+            return {
+                "response": stop_message,
+                "scenario_active": False
+            }
+        
         active_scenario = scenario_service.get_user_scenario_state(user_id)
         
         if active_scenario:

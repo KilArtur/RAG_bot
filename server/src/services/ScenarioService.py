@@ -200,3 +200,25 @@ class ScenarioService:
                 log.info(f"Завершённый сценарий для пользователя {user_id} удалён из памяти")
                 return True
         return False
+    
+    def detect_stop_command(self, message: str) -> bool:
+        stop_keywords = [
+            "останови опрос",
+            "остановить опрос",
+            "прекрати опрос",
+            "прекратить опрос",
+            "стоп опрос",
+            "остановка опрос"
+        ]
+        
+        message_lower = message.lower().strip()
+        return any(keyword in message_lower for keyword in stop_keywords)
+    
+    def stop_scenario_with_message(self, user_id: str) -> str:
+        if user_id in self.active_scenarios:
+            scenario_name = self.active_scenarios[user_id].scenario_name
+            del self.active_scenarios[user_id]
+            log.info(f"Сценарий {scenario_name} остановлен по команде пользователя {user_id}")
+            return "Опрос остановлен. При следующем запуске он начнётся с первого вопроса."
+        else:
+            return "В данный момент нет активного опроса для остановки."

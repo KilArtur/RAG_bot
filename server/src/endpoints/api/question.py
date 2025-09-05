@@ -39,6 +39,16 @@ async def question_logic(question: str, user_id: Optional[str] = None):
     if not user_id:
         user_id = f"temp_{str(uuid.uuid4())[:8]}"
 
+    # Проверяем команду остановки тестирования
+    if scenario_service.detect_stop_command(question):
+        stop_message = scenario_service.stop_scenario_with_message(user_id)
+        return {
+            "response": stop_message,
+            "scenario_active": False,
+            "user_id": user_id,
+            "source": "stop_command"
+        }
+
     active_scenario = scenario_service.get_user_scenario_state(user_id)
     
     if active_scenario:
