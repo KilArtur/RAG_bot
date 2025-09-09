@@ -1,6 +1,7 @@
 class ApiService {
     constructor() {
-        this.baseUrl = 'http://localhost:8000/api';
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        this.baseUrl = isLocal ? 'http://localhost:7000/api' : '/api';
         this.defaultHeaders = {
             'Content-Type': 'application/json',
         };

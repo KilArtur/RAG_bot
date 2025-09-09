@@ -180,3 +180,9 @@ CLAUDE.md
 data
 ./server/src/config.yml
 .yml
+
+# local
+rag_bot.tar.gz
+deploy.sh
+server/src/config.yml
+front/nginx.conf

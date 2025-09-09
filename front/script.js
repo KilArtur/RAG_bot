@@ -57,7 +57,7 @@ class ChatApp {
     }
 
     async callAPI(question) {
-        const response = await fetch(`http://localhost:8000/api/v1/question?question=${encodeURIComponent(question)}`, {
+        const response = await fetch(`/api/v1/question?question=${encodeURIComponent(question)}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
