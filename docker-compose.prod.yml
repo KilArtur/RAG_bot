@@ -1,0 +1,36 @@
+services:
+  api:
+    image: kildiyarovartur/rag_api:latest
+    container_name: rag_api
+    ports:
+      - "7000:7000"
+    environment:
+      - PYTHONPATH=/app/src
+    volumes:
+      - ./config.yml:/app/src/config.yml:ro
+      - ./prompts.yml:/app/src/prompts.yml:ro
+      - ./scenarios:/app/src/scenarios:ro
+      - ./data:/app/data:ro
+    networks:
+      - rag_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    image: kildiyarovartur/rag_frontend:latest
+    container_name: rag_frontend
+    ports:
+      - "7001:7001"
+    depends_on:
+      - api
+    networks:
+      - rag_network
+    restart: unless-stopped
+
+networks:
+  rag_network:
+    driver: bridge

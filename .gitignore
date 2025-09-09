@@ -175,6 +175,7 @@ cython_debug/
 
 # claude
 CLAUDE.md
+DEPLOY.md
 
 # data & config
 data
