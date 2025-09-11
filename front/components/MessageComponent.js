@@ -66,7 +66,7 @@ class MessageComponent {
                 <div class="typing-indicator__dot"></div>
                 <div class="typing-indicator__dot"></div>
             </div>
-            <span style="margin-left: 8px;">Генерирую подробный ответ... (это может занять до 2 минут)</span>
+            <span style="margin-left: 8px;">Generating detailed answer... (this may take up to 2 minutes)</span>
         `;
     }
 

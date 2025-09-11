@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Any
 
 from utils.logger import get_logger
 from services.LLMService import LLMService
+from services.ConscienceIQService import ConscienceIQService
 from endpoints.models.user_scenario import UserScenario
 from endpoints.models.scenario_state import ScenarioState
 from endpoints.models.question_state import QuestionState
@@ -14,6 +15,7 @@ log = get_logger("ScenarioService")
 class ScenarioService:
     def __init__(self):
         self.llm_service = LLMService()
+        self.conscience_service = ConscienceIQService()
         self.active_scenarios: Dict[str, UserScenario] = {}
         self.scenario_configs = self._load_scenarios()
         self.prompts = self._load_prompts()
@@ -57,7 +59,7 @@ class ScenarioService:
         
         try:
             result = await self.llm_service.fetch_completion(prompt)
-            if "да" in result.lower():
+            if "yes" in result.lower():
                 return "vegans"
         except Exception as e:
             log.warning(f"Ошибка при определении триггера сценария: {e}")
@@ -66,7 +68,7 @@ class ScenarioService:
     
     def start_scenario(self, user_id: str, scenario_name: str) -> str:
         if scenario_name not in self.scenario_configs:
-            return f"Сценарий {scenario_name} не найден"
+            return f"Scenario {scenario_name} not found"
         
         questions_text = self.scenario_configs[scenario_name]
         questions = [QuestionState(question=q) for q in questions_text]
@@ -122,14 +124,19 @@ class ScenarioService:
                 return self._get_clarification_prompt(current_question.question, user_response)
     
     async def _evaluate_answer_quality(self, question: str, answer: str) -> bool:
-        prompt = self.prompts.get('evaluate_answer_quality', '').format(
+        base_prompt = self.prompts.get('evaluate_answer_quality', '').format(
             question=question, 
             answer=answer
         )
         
+        # Используем Conscience IQ для этичной оценки ответов
+        enhanced_prompt = self.conscience_service.get_enhanced_prompt(
+            base_prompt, context_type="scenario"
+        )
+        
         try:
-            result = await self.llm_service.fetch_completion(prompt)
-            return "да" in result.lower() or "подходящ" in result.lower()
+            result = await self.llm_service.fetch_completion(enhanced_prompt)
+            return "yes" in result.lower() or "suitable" in result.lower()
         except Exception as e:
             log.warning(f"Ошибка при оценке качества ответа: {e}")
             return len(answer.strip()) > 5
@@ -140,12 +147,13 @@ class ScenarioService:
         
         scenario.state = ScenarioState.AWAITING_ANSWER
         
-        prompt_template = self.prompts.get('ask_question', '')
-        return prompt_template.format(
-            question=current_question.question,
-            question_number=scenario.current_question_index + 1,
-            total_questions=len(scenario.questions)
-        )
+        # Для первого вопроса сценария vegans используем специальный промпт с инструкциями
+        if scenario.scenario_name == "vegans" and scenario.current_question_index == 0:
+            prompt_template = self.prompts.get('ask_first_question_vegans', '')
+        else:
+            prompt_template = self.prompts.get('ask_question', '')
+            
+        return prompt_template.format(question=current_question.question)
     
     def _get_clarification_prompt(self, question: str, previous_answer: str) -> str:
         prompt_template = self.prompts.get('clarify_answer', '')
@@ -160,24 +168,38 @@ class ScenarioService:
 
         answers_summary = ""
         for i, q in enumerate(scenario.questions):
-            answers_summary += f"Вопрос {i+1}: {q.question}\nОтвет: {q.answer or 'Не получен'}\n\n"
+            answers_summary += f"Question {i+1}: {q.question}\nAnswer: {q.answer or 'Not received'}\n\n"
 
-        prompt_template = self.prompts.get('generate_final_plan', '')
-        final_prompt = prompt_template.format(
+        base_prompt = self.prompts.get('generate_final_plan', '').format(
             scenario_name=scenario.scenario_name,
             answers_summary=answers_summary
         )
         
+        # Используем Conscience IQ для создания этичного и персонализированного плана
+        enhanced_prompt = self.conscience_service.get_enhanced_prompt(
+            base_prompt, context_type="plan"
+        )
+        
         try:
-            log.info(f"Генерируем финальный план для пользователя {user_id}")
-            scenario.final_summary = await self.llm_service.fetch_completion(final_prompt)
+            log.info(f"Генерируем финальный план для пользователя {user_id} с учетом Conscience IQ")
+            scenario.final_summary = await self.llm_service.fetch_completion(enhanced_prompt)
             
+            # Проверяем план на соответствие этическим принципам
             if scenario.final_summary and scenario.final_summary.strip():
-                log.info(f"Финальный план успешно создан для пользователя {user_id}")
-                return scenario.final_summary
+                conscience_check = self.conscience_service.conscience_check(
+                    scenario.final_summary, f"План перехода на вегетарианство для пользователя {user_id}"
+                )
+                
+                if conscience_check:
+                    log.info(f"Финальный план прошел проверку Conscience IQ для пользователя {user_id}")
+                    return scenario.final_summary
+                else:
+                    log.warning(f"Финальный план не прошел проверку Conscience IQ для пользователя {user_id}")
+                    # Возвращаем план, но логируем предупреждение
+                    return scenario.final_summary
             else:
                 log.error(f"Финальный план пуст для пользователя {user_id}")
-                return "К сожалению, не удалось создать персонализированный план. Попробуйте обратиться позже или запросите общие рекомендации по вегетарианству."
+                return "Unfortunately, it was not possible to create a personalized plan. Please try again later or request general recommendations for vegetarianism."
                 
         except Exception as e:
             log.error(f"Ошибка при генерации финального плана для {user_id}: {str(e)}")
@@ -203,12 +225,13 @@ class ScenarioService:
     
     def detect_stop_command(self, message: str) -> bool:
         stop_keywords = [
-            "останови опрос",
-            "остановить опрос",
-            "прекрати опрос",
-            "прекратить опрос",
-            "стоп опрос",
-            "остановка опрос"
+            "stop survey",
+            "stop the survey",
+            "exit survey",
+            "quit survey",
+            "end survey",
+            "cancel survey",
+            "abort survey"
         ]
         
         message_lower = message.lower().strip()
@@ -219,6 +242,6 @@ class ScenarioService:
             scenario_name = self.active_scenarios[user_id].scenario_name
             del self.active_scenarios[user_id]
             log.info(f"Сценарий {scenario_name} остановлен по команде пользователя {user_id}")
-            return "Опрос остановлен. При следующем запуске он начнётся с первого вопроса."
+            return "Survey stopped. The next time you start, it will begin from the first question."
         else:
-            return "В данный момент нет активного опроса для остановки."
+            return "There is currently no active survey to stop."

@@ -62,7 +62,7 @@ class ChatComponent {
     }
 
     showWelcomeMessage() {
-        const welcomeText = 'Приветствую, могу помочь тебе с любым вопросом';
+        const welcomeText = 'Hello, I can help you with any question';
         const welcomeMessage = MessageComponent.createWelcomeMessage(welcomeText);
         this.messagesContainer.appendChild(welcomeMessage);
         scrollToBottom(this.messagesContainer);
@@ -80,7 +80,7 @@ class ChatComponent {
     }
 
     showServerErrorMessage() {
-        const errorText = 'Внимание: сервер может быть недоступен. Если возникнут проблемы с отправкой сообщений, попробуйте перезагрузить страницу.';
+        const errorText = 'Warning: the server may be unavailable. If you encounter issues sending messages, try reloading the page.';
         const errorMessage = MessageComponent.createErrorMessage(errorText);
         this.messagesContainer.appendChild(errorMessage);
         scrollToBottom(this.messagesContainer);
@@ -104,7 +104,7 @@ class ChatComponent {
                         <div class="typing-indicator__dot"></div>
                         <div class="typing-indicator__dot"></div>
                     </div>
-                    <span style="margin-left: 8px;">Генерирую сложный ответ... Пожалуйста, подождите...</span>
+                    <span style="margin-left: 8px;">Generating complex answer... Please wait...</span>
                 `;
             }
         }, 10000);
@@ -120,7 +120,7 @@ class ChatComponent {
             console.error('Error sending message:', error);
             clearTimeout(updateTimeout);
             this.hideLoadingMessage(loadingMessage);
-            this.addErrorMessage(error.message || 'Произошла ошибка при обработке запроса');
+            this.addErrorMessage(error.message || 'An error occurred while processing the request');
             
         } finally {
             this.setLoadingState(false);

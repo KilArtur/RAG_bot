@@ -72,15 +72,12 @@ class LLMService:
 
         except Exception as e:
             log.error(f"Ошибка в __fetch_completion: {str(e)}")
-            # Если это ошибка авторизации 401, возвращаем fallback ответ
             if "401" in str(e) and "User not found" in str(e):
                 log.error("OpenRouter API токен недействителен или истек")
-                # Возвращаем fallback ответ для продакшна
-                if "изъявляет ли он прямое желание стать вегетарианцем" in prompt.lower():
-                    return "НЕТ"  # По умолчанию отвечаем НЕТ на проверку желания
+                if "express a direct desire to become vegetarian" in prompt.lower():
+                    return "NO"
                 else:
-                    return "Извините, сейчас сервис временно недоступен. Попробуйте позже."
-            # Если это JSON ошибка, значит проблема с парсингом ответа OpenAI  
+                    return "Sorry, the service is temporarily unavailable. Please try again later."
             if "Expecting value" in str(e) or "JSON" in str(e):
                 log.error("JSON parsing error in OpenAI response - возможно ответ обрезан")
             raise e

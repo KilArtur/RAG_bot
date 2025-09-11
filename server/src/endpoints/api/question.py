@@ -6,6 +6,7 @@ import json
 
 from services.LLMService import LLMService
 from services.ScenarioService import ScenarioService
+from services.ConscienceIQService import ConscienceIQService
 from utils.logger import get_logger
 
 router = APIRouter()
@@ -25,7 +26,7 @@ async def question_post(request_data: dict):
     user_id = request_data.get("user_id")
     
     if not question:
-        raise HTTPException(status_code=400, detail="Вопрос обязателен")
+        raise HTTPException(status_code=400, detail="Question is required")
     
     return await question_logic(question, user_id)
 
@@ -60,7 +61,7 @@ async def question_logic(question: str, user_id: Optional[str] = None):
                 log.info(f"JSON тест прошёл успешно, размер JSON: {len(test_json)}")
             except (TypeError, ValueError, UnicodeDecodeError) as e:
                 log.error(f"Ошибка сериализации ответа сценария: {e}")
-                scenario_response = "Извините, ответ содержит символы, которые не могут быть переданы. Попробуйте задать вопрос проще."
+                scenario_response = "Sorry, the response contains characters that cannot be transmitted. Please try asking a simpler question."
 
             updated_scenario = scenario_service.get_user_scenario_state(user_id)
             is_completed = updated_scenario and updated_scenario.state.value == "completed"
@@ -92,9 +93,19 @@ async def question_logic(question: str, user_id: Optional[str] = None):
         return response_data
 
     try:
+        # Используем Conscience IQ для обычных RAG ответов
+        conscience_service = ConscienceIQService()
+        enhanced_question = conscience_service.get_enhanced_prompt(question, context_type="general")
+        
         llm = LLMService()
-        result = await llm.fetch_completion(question)
-        log.info(f"RAG ответ получен для пользователя {user_id}, длина: {len(result) if result else 0}")
+        result = await llm.fetch_completion(enhanced_question)
+        
+        # Проверяем ответ на соответствие этическим принципам
+        conscience_check = conscience_service.conscience_check(result, f"RAG ответ для пользователя {user_id}")
+        if not conscience_check:
+            log.warning(f"RAG ответ не прошел проверку Conscience IQ для пользователя {user_id}")
+        
+        log.info(f"RAG ответ с Conscience IQ получен для пользователя {user_id}, длина: {len(result) if result else 0}")
 
         try:
             json.dumps(result, ensure_ascii=False)
@@ -112,4 +123,4 @@ async def question_logic(question: str, user_id: Optional[str] = None):
         return response_data
     except Exception as e:
         log.error(f"Ошибка при получении RAG ответа для {user_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Ошибка при генерации ответа: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating response: {str(e)}")

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,7 +22,7 @@
             <nav class="sidebar-nav">
                 <button id="newChatBtn" class="btn btn--new-chat" type="button">
                     <span class="btn__icon">+</span>
-                    <span class="btn__text">Новый чат</span>
+                    <span class="btn__text">New chat</span>
                 </button>
             </nav>
         </aside>
@@ -41,11 +41,11 @@
                 <div class="input-area">
                     <form id="messageForm" class="message-form" role="form">
                         <div class="input-wrapper">
-                            <label for="messageInput" class="sr-only">Введите ваше сообщение</label>
+                            <label for="messageInput" class="sr-only">Enter your message</label>
                             <textarea 
                                 id="messageInput" 
                                 class="message-input"
-                                placeholder="Отправьте сообщение..." 
+                                placeholder="Send a message..."
                                 rows="1"
                                 maxlength="2000"
                                 aria-describedby="input-help"
@@ -56,7 +56,7 @@
                                 id="sendBtn" 
                                 class="btn btn--send" 
                                 type="submit"
-                                aria-label="Отправить сообщение"
+                                aria-label="Send a message..."
                                 disabled
                             >
                                 <svg class="btn__icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -66,7 +66,7 @@
                             </button>
                         </div>
                         <div id="inputHelp" class="input-help" aria-describedby="messageInput">
-                            Нажмите Enter для отправки, Shift+Enter для новой строки
+                            Press Enter to send, Shift+Enter for a new line
                         </div>
                     </form>
                 </div>
@@ -77,7 +77,7 @@
     <!-- Loading Indicator -->
     <div id="loadingIndicator" class="loading-overlay" hidden>
         <div class="spinner" aria-hidden="true"></div>
-        <span class="loading-text">Обрабатываю запрос...</span>
+        <span class="loading-text">Processing request...</span>
     </div>
 
     <!-- JavaScript Modules -->

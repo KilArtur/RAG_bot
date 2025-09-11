@@ -1,93 +1,95 @@
 for_answer_prompt: |
-  Ты RAG сервис который позволяет ответить пользователю на вопрос по книге .  
-  Твоя задача — отвечать на вопросы людей по книге, используя только предоставленную информацию (info).  
+  You are a RAG service that helps users answer questions about a book.
+  Your task is to answer people's questions about the book using only the provided information (info).
   
-  Вопрос пользователя:  
-  {{user_question}}  
-  Информация:  
-  {{text_for_rag}}  
+  User question:
+  {{user_question}}
+  Information:
+  {{text_for_rag}}
 
 chunks_promt: |
-  Ты делишь текст на чанки для RAG системы, важно целый кусок текста поделить на семантические чанки.
-  Чанки должны быть минимум в 3 предложения, необходимо так разделять текст, чтобы в нем была заключена мысль или информация разделять предоставленный тебе текст.
-  Не придумывай ничего дополнительно
+  You divide text into chunks for a RAG system. It's important to split the entire piece of text into semantic chunks.
+  Chunks should be at least 3 sentences long, and you need to divide the text so that each chunk contains a complete thought or piece of information.
+  Don't add anything extra.
   
-  Вот предоставленный текст который необходимо разбить на чанки: 
+  Here is the provided text that needs to be split into chunks:
   {{text_to_chunks}}
 
-# Промпты для системы сценариев опроса
+# Prompts for survey scenario system
 ask_question: |
-  Я провожу с вами персонализированный опрос, чтобы создать индивидуальный план.
-  Если вы хотите прекратить опрос, напиши "останови опрос"
-  
-  Вопрос {question_number} из {total_questions}:
   {question}
+
+ask_first_question_vegans: |
+  I'm conducting a survey to create a personalized plan for transitioning to vegetarianism.
+  Please answer as detailed and clearly as possible - this will help me create the most suitable plan specifically for you.
   
-  Пожалуйста, ответьте подробно и честно. Ваш ответ поможет мне создать наиболее подходящий именно для вас план.
+  If you want to exit the survey, write "stop survey".
+  
+  {question}
 
 clarify_answer: |
-  Не могли бы вы дать более развернутый ответ, это помогло бы мне лучше понять ваши потребности и составить более точный план.
-  Если вы хотите прекратить опрос, напиши "останови опрос"
+  Could you provide a more detailed answer? This would help me better understand your needs and create a more accurate plan.
+  If you want to stop the survey, write "stop survey".
 
 evaluate_answer_quality: |
-  Оцени, является ли данный ответ пользователя содержательным и достаточно для понимания его ситуации.
+  Evaluate whether this user's answer is meaningful and sufficient for understanding their situation.
   
-  Вопрос: {question}
-  Ответ пользователя: {answer}
+  Question: {question}
+  User's answer: {answer}
   
-  Ответ должен быть:
-  - Содержательным (не "да", "нет", "не знаю")
-  - Относящимся к заданному вопросу
-  - Не проси дотошный ответ
-  - Ответ пользователя может быть отрицательным
-  - Если ответ пользователя насчет здоровья отрицательный, то ты доложен зачесть его как полный, потому у человека нет проблем со здоровьем, главное, чтобы он не использовал слова неуверенности, такие как: "наверное", "возможно", "скоей всего"
-  - Ответ пользователя может быть коротким, главное, чтобы он отвечал на поставленный вопрос
+  The answer should be:
+  - Meaningful (not "yes", "no", "I don't know")
+  - Related to the asked question
+  - Don't require overly detailed responses
+  - User's answer can be negative
+  - If user's health-related answer is negative, you should consider it complete because they have no health problems, as long as they don't use uncertainty words like: "probably", "maybe", "most likely"
+  - User's answer can be short, the main thing is that it answers the question asked
   
-  Ответь только "ДА" если ответ подходящий, или "НЕТ" если нужно переспросить.
+  Answer only "YES" if the answer is suitable, or "NO" if you need to ask again.
 
 generate_final_plan: |
-  На основе ответов пользователя создай подробный индивидуальный план перехода на вегетарианство.
+  Based on the user's answers, create a detailed individual plan for transitioning to vegetarianism.
   
-  Сценарий: {scenario_name}
+  Scenario: {scenario_name}
   
-  Ответы пользователя:
+  User's answers:
   {answers_summary}
   
-  Создай персонализированный пошаговый план, который учитывает:
-  - Мотивацию пользователя
-  - Его здоровье и ограничения
-  - Образ жизни и бытовые условия
-  - Бюджетные возможности
+  Create a personalized step-by-step plan that considers:
+  - User's motivation
+  - Their health and restrictions
+  - Lifestyle and living conditions
+  - Budget possibilities
   
-  План должен быть практичным, реалистичным и содержать конкретные рекомендации по:
-  - Постепенному переходу на растительное питание
-  - Обеспечению всех необходимых питательных веществ
-  - Планированию покупок и приготовления еды
-  - Преодолению возможных трудностей
+  The plan should be practical, realistic and contain specific recommendations for:
+  - Gradual transition to plant-based nutrition
+  - Ensuring all necessary nutrients
+  - Planning shopping and meal preparation
+  - Overcoming possible difficulties
   
-  Структурируй ответ по неделям/этапам с конкретными действиями.
+  Structure the answer by weeks/stages with specific actions.
 
 error_complete_scenario: |
-  К сожалению, произошла ошибка при создании персонализированного плана. 
+  Unfortunately, an error occurred while creating a personalized plan.
             
-  Общие рекомендации для перехода на вегетарианство:
-  • Начните постепенно - замените одно мясное блюдо в день на растительное
-  • Включите в рацион бобовые (чечевица, нут, фасоль) как источник белка
-  • Добавьте орехи и семена для получения полезных жиров
-  • Употребляйте разнообразные овощи и фрукты
-  • Рассмотрите прием витамина B12 в виде добавок
-  • Проконсультируйтесь с врачом перед кардинальной сменой рациона
+  General recommendations for transitioning to vegetarianism:
+  • Start gradually - replace one meat dish per day with a plant-based one
+  • Include legumes (lentils, chickpeas, beans) as a protein source
+  • Add nuts and seeds for healthy fats
+  • Eat a variety of vegetables and fruits
+  • Consider taking vitamin B12 supplements
+  • Consult a doctor before making radical dietary changes
 
-  Попробуйте запросить персонализированный план позже.
+  Try requesting a personalized plan later.
 
 trigger_prompt: |
-  На основе ответа пользователя определи изъявляет ли он прямое желание стать вегетарианцем, то есть отказаться от мясоедства
-  Изъявляет желание это значит, он пишет, что он хочет стать веганом или просит составить план, если он говорит, что только думает стать веганом, то это не прямое желание
-  Если пользователь просит поговорить с ним о веганстве, то это не прямое желание, прямое желание это когда сообщение пользователя можно конвертировать в предложение "Я хочу стать вегетарианцем"
-  Если пользователь написал, что думает стать веганом, не составляй для него никаких планов, и по делу просто ты должен его поддержать, кратко рассказать почему это хорошая идея и предупредить о рисках, предложить пользователю написать "Я хочу стать вегетарианцем", чтобы ты мог провести с ним опрос и создать индивидуальный план 
-  Если пользователь спрашивает что-то про вегетарианство, то сразу необходимо вернуть "НЕТ"
+  Based on the user's response, determine whether they express a direct desire to become vegetarian, i.e., to give up eating meat.
+  Expressing desire means they write that they want to become vegan or ask to create a plan. If they say they're only thinking about becoming vegan, that's not a direct desire.
+  If the user asks to talk about veganism, that's not a direct desire. Direct desire is when the user's message can be converted to the sentence "I want to become vegetarian".
+  If the user wrote that they're thinking about becoming vegan, don't create any plans for them, just support them, briefly explain why it's a good idea and warn about risks, suggest the user write "I want to become vegetarian" so you can conduct a survey and create an individual plan.
+  If the user asks something about vegetarianism, immediately return "NO".
   
   
-  Сообщение пользователя: {user_message}
+  User's message: {user_message}
   
-  Ответь только "ДА" если ответ подходящий, или "НЕТ" если в тексте пользователь не изъявил желания перейти на вегетарианство
+  Answer only "YES" if the answer is suitable, or "NO" if the user did not express a desire to transition to vegetarianism.

@@ -31,7 +31,7 @@ class App {
             console.log('RAG Bot initialized successfully');
         } catch (error) {
             console.error('Error initializing app:', error);
-            this.showErrorMessage('Ошибка инициализации приложения');
+            this.showErrorMessage('Application initialization error');
         }
     }
 
@@ -93,7 +93,7 @@ class App {
      */
     showConnectionStatus(isOnline) {
         this.showNotification(
-            isOnline ? 'Соединение восстановлено' : 'Отсутствует соединение с интернетом',
+            isOnline ? 'Connection restored' : 'No internet connection',
             isOnline ? 'success' : 'error',
             3000
         );
