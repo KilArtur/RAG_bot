@@ -14,7 +14,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
             "http://localhost:7001",
-            "http://54.88.62.150:7001", 
+            "http://54.88.62.150:7001",
+            "https://54.88.62.150:7001", 
             "https://127.0.0.1:7001",
             "https://deeplogix.io",
             "http://deeplogix.io",

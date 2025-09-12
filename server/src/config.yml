@@ -1,7 +1,7 @@
 llm:
   url: https://openrouter.ai/api/v1
   model: qwen/qwen3-30b-a3b-instruct-2507
-  token: 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
+  token:
 
 qdrant:
   host: localhost

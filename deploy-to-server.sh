@@ -23,9 +23,11 @@ scp -i "$SSH_KEY_PATH" ./server/src/config.yml "$SERVER":~/"$SERVER_DIR"/
 scp -i "$SSH_KEY_PATH" ./server/src/prompts.yml "$SERVER":~/"$SERVER_DIR"/
 scp -i "$SSH_KEY_PATH" -r ./server/src/scenarios "$SERVER":~/"$SERVER_DIR"/
 
-# Создаем только пустую директорию data (файлы chunks и book_sample.pdf не нужны)
+# Создаем директорию data и копируем AI Model - Instructional.pdf
 echo "📁 Создаю директорию data на сервере..."
 ssh -i "$SSH_KEY_PATH" "$SERVER" "mkdir -p $SERVER_DIR/data"
+echo "📄 Копирую AI Model - Instructional.pdf..."
+scp -i "$SSH_KEY_PATH" "./data/AI Model - Instructional.pdf" "$SERVER":~/"$SERVER_DIR"/data/
 
 # Деплоим на сервере
 echo "🎯 Запускаю приложение на сервере..."

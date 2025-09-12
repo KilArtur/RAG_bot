@@ -34,6 +34,8 @@ class ApiService {
             };
             
             console.log(`Отправка POST запроса к: ${url} (попытка ${retryCount + 1})`);
+            console.log('Current baseUrl:', this.baseUrl);
+            console.log('Window location:', window.location.href);
             const startTime = Date.now();
             
             const response = await fetch(url, {
