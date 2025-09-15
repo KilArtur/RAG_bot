@@ -32,7 +32,7 @@ class ChatApp {
     }
 
     showWelcomeMessage() {
-        this.addMessage('assistant', 'Привет! Я RAG-бот, готовый ответить на ваши вопросы по книге. Задайте любой вопрос!');
+        this.addMessage('assistant', 'Hello! I am RAG-bot ready to answer your questions about the book. Ask any question!');
     }
 
     async sendMessage() {
@@ -49,7 +49,7 @@ class ChatApp {
             const response = await this.callAPI(message);
             this.addMessage('assistant', response);
         } catch (error) {
-            this.addMessage('assistant', 'Извините, произошла ошибка при обработке вашего запроса. Попробуйте еще раз.');
+            this.addMessage('assistant', 'Sorry, there was an error processing your request. Please try again.');
             console.error('API Error:', error);
         } finally {
             this.setLoading(false);
@@ -69,7 +69,7 @@ class ChatApp {
         }
 
         const data = await response.json();
-        return data["response: "] || data.response || 'Нет ответа от сервера';
+        return data["response: "] || data.response || 'No response from server';
     }
 
     addMessage(role, content) {
@@ -97,7 +97,7 @@ class ChatApp {
             loadingDiv.className = 'message assistant loading-message';
             loadingDiv.innerHTML = `
                 <div class="message-avatar">AI</div>
-                <div class="message-content loading">Думаю...</div>
+                <div class="message-content loading">Thinking...</div>
             `;
             this.messagesContainer.appendChild(loadingDiv);
         } else {

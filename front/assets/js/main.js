@@ -1,4 +1,4 @@
-import ChatComponent from '../../components/ChatComponent.js?v=1.1';
+import ChatComponent from '../../components/ChatComponent.js?v=1.2';
 
 class App {
     constructor() {

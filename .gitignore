@@ -187,3 +187,4 @@ rag_bot.tar.gz
 deploy.sh
 server/src/config.yml
 front/nginx.conf
+nginx_reverse_proxy_fix.conf

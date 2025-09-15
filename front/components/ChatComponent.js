@@ -157,7 +157,7 @@ class ChatComponent {
                     font-weight: 500;
                 `;
             } else {
-                scenarioIndicator.textContent = `📋 Сценарий: ${metadata.scenario_name}`;
+                scenarioIndicator.textContent = `📋 Scenario: ${metadata.scenario_name}`;
                 scenarioIndicator.style.cssText = `
                     font-size: 12px; 
                     color: #666; 

@@ -4,8 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RAG Bot</title>
-    
-    <!-- CSS Files -->
+
+    <script>
+        // Set base href dynamically based on environment
+        const hostname = window.location.hostname;
+        const isDeeplogix = hostname === 'deeplogix.io' || hostname.includes('deeplogix.io');
+        
+        if (isDeeplogix) {
+            // Production on deeplogix.io - use /rag/ prefix
+            const baseTag = document.createElement('base');
+            baseTag.href = '/rag/';
+            document.head.appendChild(baseTag);
+        }
+        // For local development (localhost:7001 or IP:7001) - no base href needed
+    </script>
+
     <link rel="stylesheet" href="assets/css/reset.css">
     <link rel="stylesheet" href="assets/css/variables.css">
     <link rel="stylesheet" href="assets/css/layout.css">

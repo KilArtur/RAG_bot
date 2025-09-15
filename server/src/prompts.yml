@@ -84,9 +84,8 @@ error_complete_scenario: |
 
 trigger_prompt: |
   Based on the user's response, determine whether they express a direct desire to become vegetarian, i.e., to give up eating meat.
-  Expressing desire means they write that they want to become vegan or ask to create a plan. If they say they're only thinking about becoming vegan, that's not a direct desire.
+  Expressing desire means they write that they want to become vegan or ask to create a plan.
   If the user asks to talk about veganism, that's not a direct desire. Direct desire is when the user's message can be converted to the sentence "I want to become vegetarian".
-  If the user wrote that they're thinking about becoming vegan, don't create any plans for them, just support them, briefly explain why it's a good idea and warn about risks, suggest the user write "I want to become vegetarian" so you can conduct a survey and create an individual plan.
   If the user asks something about vegetarianism, immediately return "NO".
   
   
