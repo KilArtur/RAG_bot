@@ -1,20 +1,3 @@
-for_answer_prompt: |
-  You are a RAG service that helps users answer questions about a book.
-  Your task is to answer people's questions about the book using only the provided information (info).
-  
-  User question:
-  {{user_question}}
-  Information:
-  {{text_for_rag}}
-
-chunks_promt: |
-  You divide text into chunks for a RAG system. It's important to split the entire piece of text into semantic chunks.
-  Chunks should be at least 3 sentences long, and you need to divide the text so that each chunk contains a complete thought or piece of information.
-  Don't add anything extra.
-  
-  Here is the provided text that needs to be split into chunks:
-  {{text_to_chunks}}
-
 # Prompts for survey scenario system
 ask_question: |
   {question}
