@@ -5,10 +5,30 @@ ask_question: |
 ask_first_question_vegans: |
   I'm conducting a survey to create a personalized plan for transitioning to vegetarianism.
   Please answer as detailed and clearly as possible - this will help me create the most suitable plan specifically for you.
-  
+
   If you want to exit the survey, write "stop survey".
-  
+
   {question}
+
+ask_first_question_employee: |
+  I'm conducting a survey to assess your psychological and cognitive load using the Likert method.
+
+  Two subscales (10+10 Likert items, rating 1–7)
+
+  Use the last 5 days as your reference frame. Rate each statement on a scale from 1 to 7, where:
+  1 - strongly disagree
+  2 - disagree
+  3 - somewhat disagree
+  4 - neutral
+  5 - somewhat agree
+  6 - agree
+  7 - strongly agree
+
+  If you want to exit the survey, write "stop survey".
+
+  {question}
+
+  Please provide only a number from 1 to 7.
 
 clarify_answer: |
   Could you provide a more detailed answer? This would help me better understand your needs and create a more accurate plan.
@@ -16,10 +36,10 @@ clarify_answer: |
 
 evaluate_answer_quality: |
   Evaluate whether this user's answer is meaningful and sufficient for understanding their situation.
-  
+
   Question: {question}
   User's answer: {answer}
-  
+
   The answer should be:
   - Meaningful (not "yes", "no", "I don't know")
   - Related to the asked question
@@ -27,8 +47,22 @@ evaluate_answer_quality: |
   - User's answer can be negative
   - If user's health-related answer is negative, you should consider it complete because they have no health problems, as long as they don't use uncertainty words like: "probably", "maybe", "most likely"
   - User's answer can be short, the main thing is that it answers the question asked
-  
+
   Answer only "YES" if the answer is suitable, or "NO" if you need to ask again.
+
+evaluate_answer_quality_employee: |
+  Evaluate whether this user's Likert scale answer is valid for the cognitive load assessment.
+
+  Question: {question}
+  User's answer: {answer}
+
+  The answer should be:
+  - A single number from 1 to 7
+  - No additional text or explanations required
+  - Numbers like "5", "3", "7" are acceptable
+  - Text like "пять", "three", or explanatory text should be marked as invalid
+
+  Answer only "YES" if the answer is a valid Likert scale response (1-7), or "NO" if you need to ask again.
 
 generate_final_plan: |
   Based on the user's answers, create a detailed individual plan for transitioning to vegetarianism.
@@ -65,13 +99,94 @@ error_complete_scenario: |
 
   Try requesting a personalized plan later.
 
-trigger_prompt: |
+trigger_prompt_vegans: |
   Based on the user's response, determine whether they express a direct desire to become vegetarian, i.e., to give up eating meat.
   Expressing desire means they write that they want to become vegan or ask to create a plan.
   If the user asks to talk about veganism, that's not a direct desire. Direct desire is when the user's message can be converted to the sentence "I want to become vegetarian".
   If the user asks something about vegetarianism, immediately return "NO".
-  
-  
+
+
   User's message: {user_message}
-  
+
   Answer only "YES" if the answer is suitable, or "NO" if the user did not express a desire to transition to vegetarianism.
+
+trigger_prompt_employee: |
+  Based on the user's response, determine whether they express a direct desire to assess their psychological and mental load.
+  Expressing desire means they ask to evaluate their cognitive load, mental stress, work-life balance, or ask for help with workload assessment.
+  Keywords that indicate this desire: "assess load", "psychological load", "cognitive load", "mental load", "work stress", "burnout", "work-life balance", "evaluate stress", "mental fatigue", "workload assessment".
+  If the user just mentions stress without asking for assessment, return "NO".
+
+  User's message: {user_message}
+
+  Answer only "YES" if the user wants cognitive load assessment, or "NO" if they did not express this desire.
+
+generate_final_plan_employee: |
+  Analyze the user's cognitive load assessment results and provide practical recommendations for reducing psychological and mental load.
+
+  Scenario: {scenario_name}
+
+  User's Likert scale responses (1-7 scale, last 5 days):
+  {answers_summary}
+
+  IMPORTANT: Analyze responses following the Cognitive Load Detection Framework methodology:
+  - Questions 1-10: Work load (Work subscale)
+  - Questions 11-20: Home load (Home subscale)
+  - Baseline questions (odd numbers): low scores indicate high load
+  - Trigger questions (even numbers): high scores indicate high load
+
+  Create a personalized analysis and recommendations:
+
+  1. **COGNITIVE LOAD ASSESSMENT:**
+     - Analyze work load (questions 1-10)
+     - Analyze home load (questions 11-20)
+     - Determine overall load level: low/medium/high
+
+  2. **IDENTIFIED PROBLEM AREAS:**
+     - Specify concrete areas with increased load
+     - Explain the connection between responses and real problems
+
+  3. **PRACTICAL RECOMMENDATIONS:**
+     - Work load management techniques
+     - Recovery and rest strategies
+     - Efficiency improvement methods
+     - Stress reduction techniques
+
+  4. **ACTION PLAN:**
+     - Immediate actions (first 1-2 weeks)
+     - Medium-term changes (1-2 months)
+     - Long-term strategies (3+ months)
+
+  The response should be in English, practical and applicable in real life.
+
+error_complete_scenario_employee: |
+  Unfortunately, an error occurred while creating a personalized cognitive load analysis.
+
+  General recommendations for reducing psychological and mental load:
+
+  **Work Environment:**
+  • Use the Pomodoro Technique (25 min work + 5 min break)
+  • Structure tasks by priority (Eisenhower Matrix)
+  • Take regular breaks every 1-2 hours
+  • Minimize multitasking
+
+  **Home Environment:**
+  • Establish boundaries between work and personal life
+  • Practice relaxation techniques (meditation, breathing exercises)
+  • Ensure quality sleep (7-9 hours)
+  • Engage in regular physical activity
+
+  Try requesting a personalized analysis later.
+
+clarify_answer_employee: |
+  Please provide only a number from 1 to 7 in response to the statement.
+
+  Rating scale:
+  1 - strongly disagree
+  2 - disagree
+  3 - somewhat disagree
+  4 - neutral
+  5 - somewhat agree
+  6 - agree
+  7 - strongly agree
+
+  If you want to exit the survey, write "stop survey".

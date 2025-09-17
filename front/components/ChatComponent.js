@@ -144,7 +144,7 @@ class ChatComponent {
             
             // Если сценарий завершён, показываем специальный индикатор
             if (metadata.scenario_completed) {
-                scenarioIndicator.textContent = `✅ Персональный план готов (${metadata.scenario_name})`;
+                scenarioIndicator.textContent = `✅ Personal plan is ready (${metadata.scenario_name})`;
                 scenarioIndicator.style.cssText = `
                     font-size: 12px; 
                     color: #2d5a2d; 

@@ -55,15 +55,24 @@ class ScenarioService:
             return {}
     
     async def detect_scenario_trigger(self, user_message: str) -> Optional[str]:
-        prompt = self.prompts.get('trigger_prompt', '').format(user_message=user_message)
-        
+        # Проверяем триггер для vegans
+        vegans_prompt = self.prompts.get('trigger_prompt_vegans', '').format(user_message=user_message)
         try:
-            result = await self.llm_service.fetch_completion(prompt)
+            result = await self.llm_service.fetch_completion(vegans_prompt)
             if "yes" in result.lower():
                 return "vegans"
         except Exception as e:
-            log.warning(f"Ошибка при определении триггера сценария: {e}")
-        
+            log.warning(f"Ошибка при определении триггера vegans: {e}")
+
+        # Проверяем триггер для employee
+        employee_prompt = self.prompts.get('trigger_prompt_employee', '').format(user_message=user_message)
+        try:
+            result = await self.llm_service.fetch_completion(employee_prompt)
+            if "yes" in result.lower():
+                return "employee"
+        except Exception as e:
+            log.warning(f"Ошибка при определении триггера employee: {e}")
+
         return None
     
     def start_scenario(self, user_id: str, scenario_name: str) -> str:
@@ -100,7 +109,7 @@ class ScenarioService:
         current_question.attempts += 1
 
         is_satisfactory = await self._evaluate_answer_quality(
-            current_question.question, user_response
+            current_question.question, user_response, scenario.scenario_name
         )
         
         if is_satisfactory:
@@ -121,19 +130,26 @@ class ScenarioService:
                 else:
                     return self._get_next_question_prompt(user_id)
             else:
-                return self._get_clarification_prompt(current_question.question, user_response)
+                return self._get_clarification_prompt(current_question.question, user_response, scenario.scenario_name)
     
-    async def _evaluate_answer_quality(self, question: str, answer: str) -> bool:
-        base_prompt = self.prompts.get('evaluate_answer_quality', '').format(
-            question=question, 
-            answer=answer
-        )
-        
+    async def _evaluate_answer_quality(self, question: str, answer: str, scenario_name: str = None) -> bool:
+        # Для employee опроса используем специальный промпт для Likert шкалы
+        if scenario_name == "employee":
+            base_prompt = self.prompts.get('evaluate_answer_quality_employee', '').format(
+                question=question,
+                answer=answer
+            )
+        else:
+            base_prompt = self.prompts.get('evaluate_answer_quality', '').format(
+                question=question,
+                answer=answer
+            )
+
         # Используем Conscience IQ для этичной оценки ответов
         enhanced_prompt = self.conscience_service.get_enhanced_prompt(
             base_prompt, context_type="scenario"
         )
-        
+
         try:
             result = await self.llm_service.fetch_completion(enhanced_prompt)
             return "yes" in result.lower() or "suitable" in result.lower()
@@ -147,16 +163,21 @@ class ScenarioService:
         
         scenario.state = ScenarioState.AWAITING_ANSWER
         
-        # Для первого вопроса сценария vegans используем специальный промпт с инструкциями
+        # Для первого вопроса сценариев используем специальные промпты с инструкциями
         if scenario.scenario_name == "vegans" and scenario.current_question_index == 0:
             prompt_template = self.prompts.get('ask_first_question_vegans', '')
+        elif scenario.scenario_name == "employee" and scenario.current_question_index == 0:
+            prompt_template = self.prompts.get('ask_first_question_employee', '')
         else:
             prompt_template = self.prompts.get('ask_question', '')
             
         return prompt_template.format(question=current_question.question)
     
-    def _get_clarification_prompt(self, question: str, previous_answer: str) -> str:
-        prompt_template = self.prompts.get('clarify_answer', '')
+    def _get_clarification_prompt(self, question: str, previous_answer: str, scenario_name: str = None) -> str:
+        if scenario_name == "employee":
+            prompt_template = self.prompts.get('clarify_answer_employee', '')
+        else:
+            prompt_template = self.prompts.get('clarify_answer', '')
         return prompt_template.format(
             question=question,
             previous_answer=previous_answer
@@ -170,10 +191,17 @@ class ScenarioService:
         for i, q in enumerate(scenario.questions):
             answers_summary += f"Question {i+1}: {q.question}\nAnswer: {q.answer or 'Not received'}\n\n"
 
-        base_prompt = self.prompts.get('generate_final_plan', '').format(
-            scenario_name=scenario.scenario_name,
-            answers_summary=answers_summary
-        )
+        # Для employee используем специальный промпт
+        if scenario.scenario_name == "employee":
+            base_prompt = self.prompts.get('generate_final_plan_employee', '').format(
+                scenario_name=scenario.scenario_name,
+                answers_summary=answers_summary
+            )
+        else:
+            base_prompt = self.prompts.get('generate_final_plan', '').format(
+                scenario_name=scenario.scenario_name,
+                answers_summary=answers_summary
+            )
         
         # Используем Conscience IQ для создания этичного и персонализированного плана
         enhanced_prompt = self.conscience_service.get_enhanced_prompt(
@@ -203,7 +231,10 @@ class ScenarioService:
                 
         except Exception as e:
             log.error(f"Ошибка при генерации финального плана для {user_id}: {str(e)}")
-            return self.prompts.get('error_complete_scenario', '')
+            if scenario.scenario_name == "employee":
+                return self.prompts.get('error_complete_scenario_employee', '')
+            else:
+                return self.prompts.get('error_complete_scenario', '')
     
     def get_user_scenario_state(self, user_id: str) -> Optional[UserScenario]:
         return self.active_scenarios.get(user_id)
