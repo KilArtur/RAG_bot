@@ -1,6 +1,6 @@
-import MessageComponent from './MessageComponent.js?v=1.1';
-import ApiService from '../services/ApiService.js?v=1.1';
-import { debounce, scrollToBottom } from '../utils/helpers.js?v=1.1';
+import MessageComponent from './MessageComponent.js?v=1.2';
+import ApiService from '../services/ApiService.js?v=1.2';
+import { debounce, scrollToBottom } from '../utils/helpers.js?v=1.2';
 
 class ChatComponent {
     constructor() {
@@ -137,38 +137,26 @@ class ChatComponent {
         const formattedContent = MessageComponent.formatText(content);
         const assistantMessage = MessageComponent.create('assistant', formattedContent);
         
-        // Добавляем индикатор для сценария
-        if (metadata.scenario_active) {
+        // Добавляем специальный класс для завершенных сценариев для полной ширины
+        if (metadata.scenario_completed) {
+            assistantMessage.classList.add('message--scenario-completed');
+        }
+
+        // Добавляем индикатор для активных сценариев (но НЕ для завершенных)
+        if (metadata.scenario_active && !metadata.scenario_completed) {
             const scenarioIndicator = document.createElement('div');
             scenarioIndicator.className = 'scenario-indicator';
-            
-            // Если сценарий завершён, показываем специальный индикатор
-            if (metadata.scenario_completed) {
-                scenarioIndicator.textContent = `✅ Personal plan is ready (${metadata.scenario_name})`;
-                scenarioIndicator.style.cssText = `
-                    font-size: 12px; 
-                    color: #2d5a2d; 
-                    margin-bottom: 12px; 
-                    padding: 6px 12px; 
-                    background: #e8f5e8; 
-                    border: 1px solid #4caf50;
-                    border-radius: 12px; 
-                    display: inline-block;
-                    font-weight: 500;
-                `;
-            } else {
-                scenarioIndicator.textContent = `📋 Scenario: ${metadata.scenario_name}`;
-                scenarioIndicator.style.cssText = `
-                    font-size: 12px; 
-                    color: #666; 
-                    margin-bottom: 8px; 
-                    padding: 4px 8px; 
-                    background: #f0f0f0; 
-                    border-radius: 12px; 
-                    display: inline-block;
-                `;
-            }
-            
+            scenarioIndicator.textContent = `📋 Scenario: ${metadata.scenario_name}`;
+            scenarioIndicator.style.cssText = `
+                font-size: 12px;
+                color: #666;
+                margin-bottom: 8px;
+                padding: 4px 8px;
+                background: #f0f0f0;
+                border-radius: 12px;
+                display: inline-block;
+            `;
+
             assistantMessage.insertBefore(scenarioIndicator, assistantMessage.firstChild);
         }
         

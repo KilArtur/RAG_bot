@@ -29,11 +29,3 @@ echo "⬆️  Загружаю образ фронтенда в Docker Hub..."
 docker push kildiyarovartur/rag_frontend:latest
 
 echo "✅ Образы успешно собраны и загружены в Docker Hub!"
-echo ""
-echo "Следующие шаги:"
-echo "1. Скопируйте файлы на сервер:"
-echo "   scp -i SSH/KEY/PATH -r ./server/src/config.yml ./server/src/prompts.yml ./server/src/scenarios ./data ./docker-compose.prod.yml ubuntu@54.88.62.150:~/rag_app/"
-echo ""
-echo "2. Подключитесь к серверу и запустите приложение:"
-echo "   ssh -i SSH/KEY/PATH ubuntu@54.88.62.150"
-echo "   cd rag_app && docker-compose -f docker-compose.prod.yml up -d"

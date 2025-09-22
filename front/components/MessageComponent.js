@@ -1,4 +1,4 @@
-import MarkdownRenderer from '../utils/MarkdownRenderer.js?v=1.1';
+import MarkdownRenderer from '../utils/MarkdownRenderer.js?v=1.2';
 
 class MessageComponent {
     static create(role, content, options = {}) {

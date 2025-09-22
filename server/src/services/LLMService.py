@@ -12,7 +12,8 @@ class LLMService:
     def __init__(self):
         self.openai = AsyncOpenAI(
             api_key=CONFIG.llm.token,
-            base_url=CONFIG.llm.url
+            base_url=CONFIG.llm.url,
+            timeout=180.0
         )
         self.request_counter = 0
         self.total_input_token = 0
