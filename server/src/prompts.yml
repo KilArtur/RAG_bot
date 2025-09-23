@@ -3,8 +3,11 @@ ask_question: |
   {question}
 
 ask_first_question_vegans: |
-  I'm conducting a survey to create a personalized plan for transitioning to vegetarianism.
-  Please answer as detailed and clearly as possible - this will help me create the most suitable plan specifically for you.
+  I'm conducting a Dietary Adaptation Readiness Index (DARI) assessment to evaluate your readiness for transitioning to veganism.
+
+  Please rate each statement on a scale from 1 to 7 according to the instructions provided with each question.
+
+  This assessment consists of 5 questions that will help determine your psychological readiness for dietary change and create a personalized transition plan.
 
   If you want to exit the survey, write "stop survey".
 
@@ -31,24 +34,23 @@ ask_first_question_employee: |
   Please provide only a number from 1 to 7.
 
 clarify_answer: |
-  Could you provide a more detailed answer? This would help me better understand your needs and create a more accurate plan.
+  Please provide only a number from 1 to 7 according to the scale instructions in the question.
+
   If you want to stop the survey, write "stop survey".
 
 evaluate_answer_quality: |
-  Evaluate whether this user's answer is meaningful and sufficient for understanding their situation.
+  Evaluate whether this user's rating answer is valid for the DARI assessment.
 
   Question: {question}
   User's answer: {answer}
 
   The answer should be:
-  - Meaningful (not "yes", "no", "I don't know")
-  - Related to the asked question
-  - Don't require overly detailed responses
-  - User's answer can be negative
-  - If user's health-related answer is negative, you should consider it complete because they have no health problems, as long as they don't use uncertainty words like: "probably", "maybe", "most likely"
-  - User's answer can be short, the main thing is that it answers the question asked
+  - A single number from 1 to 7
+  - No additional text or explanations required
+  - Numbers like "5", "3", "7" are acceptable
+  - Text like "five", "three", or explanatory text should be marked as invalid
 
-  Answer only "YES" if the answer is suitable, or "NO" if you need to ask again.
+  Answer only "YES" if the answer is a valid rating (1-7), or "NO" if you need to ask again.
 
 evaluate_answer_quality_employee: |
   Evaluate whether this user's Likert scale answer is valid for the cognitive load assessment.
@@ -65,26 +67,56 @@ evaluate_answer_quality_employee: |
   Answer only "YES" if the answer is a valid Likert scale response (1-7), or "NO" if you need to ask again.
 
 generate_final_plan: |
-  Based on the user's answers, create a detailed individual plan for transitioning to vegetarianism.
-  
+  Analyze the user's DARI (Dietary Adaptation Readiness Index) assessment and create a personalized vegan transition plan.
+
   Scenario: {scenario_name}
-  
-  User's answers:
+
+  User's DARI scale responses (1-7 scale):
   {answers_summary}
-  
-  Create a personalized step-by-step plan that considers:
-  - User's motivation
-  - Their health and restrictions
-  - Lifestyle and living conditions
-  - Budget possibilities
-  
-  The plan should be practical, realistic and contain specific recommendations for:
-  - Gradual transition to plant-based nutrition
-  - Ensuring all necessary nutrients
-  - Planning shopping and meal preparation
-  - Overcoming possible difficulties
-  
-  Structure the answer by weeks/stages with specific actions.
+
+  IMPORTANT: Calculate and interpret the DARI score according to the framework:
+
+  **STEP 1 - REVERSE SCORING:**
+  Question 3 (Item 8): RS = 8 - raw score (reverse score the temporal sacrifice question)
+
+  **STEP 2 - CALCULATE SUBSCALE SCORES (0-100):**
+  - TA (Temporal Agency): Questions 1, 2 - future orientation
+  - MR (Moral Reasoning): Question 4 - ethical consistency
+  - NA (Negative Affect): Question 5 - emotional regulation
+  - CF (Cognitive Flexibility): Question 3 (reversed) - adaptability
+  - PC (Post-Revision Consolidation): Not assessed in short version
+  - VA (Value Adherence): Not assessed in short version
+
+  **STEP 3 - OVERALL ASSESSMENT:**
+  Determine readiness level based on responses:
+  - High readiness (most responses 5-7): Strong likelihood of successful transition
+  - Moderate readiness (mixed responses): Manageable transition with support
+  - Low readiness (most responses 1-3): Consider staged approach
+
+  **CREATE PERSONALIZED PLAN:**
+
+  1. **DARI SCORE & INTERPRETATION:**
+     - Calculate approximate readiness score
+     - Interpret what this means for transition success
+     - Identify strongest and weakest areas
+
+  2. **TAILORED TRANSITION STRATEGY:**
+     - Based on temporal agency: timeline recommendations
+     - Based on moral reasoning: motivation reinforcement
+     - Based on emotional regulation: stress management techniques
+     - Based on flexibility: adaptation strategies
+
+  3. **STEP-BY-STEP IMPLEMENTATION:**
+     - Week 1-2: Initial changes based on readiness
+     - Week 3-4: Progressive implementation
+     - Month 2+: Long-term sustainability
+
+  4. **SUPPORT RECOMMENDATIONS:**
+     - Address identified weak areas
+     - Suggest specific resources and techniques
+     - Monitor and adjustment strategies
+
+  The response should be in English, evidence-based, and practical for real-world implementation.
 
 error_complete_scenario: |
   Unfortunately, an error occurred while creating a personalized plan.
