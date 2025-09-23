@@ -20,8 +20,7 @@ def get_scenario_service():
 async def handle_scenario_message(user_id: str, message: str):
     try:
         scenario_service = get_scenario_service()
-        
-        # Проверяем команду остановки тестирования
+
         if scenario_service.detect_stop_command(message):
             stop_message = scenario_service.stop_scenario_with_message(user_id)
             return {
@@ -42,7 +41,7 @@ async def handle_scenario_message(user_id: str, message: str):
                     "total_questions": len(active_scenario.questions)
                 }
 
-        scenario_name = scenario_service.detect_scenario_trigger(message)
+        scenario_name = await scenario_service.detect_scenario_trigger(message)
         if scenario_name:
             response = scenario_service.start_scenario(user_id, scenario_name)
             return {

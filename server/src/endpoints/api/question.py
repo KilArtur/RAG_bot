@@ -40,7 +40,6 @@ async def question_logic(question: str, user_id: Optional[str] = None):
     if not user_id:
         user_id = f"temp_{str(uuid.uuid4())[:8]}"
 
-    # Проверяем команду остановки тестирования
     if scenario_service.detect_stop_command(question):
         stop_message = scenario_service.stop_scenario_with_message(user_id)
         return {
@@ -93,14 +92,12 @@ async def question_logic(question: str, user_id: Optional[str] = None):
         return response_data
 
     try:
-        # Используем Conscience IQ для обычных RAG ответов
         conscience_service = ConscienceIQService()
         enhanced_question = conscience_service.get_enhanced_prompt(question, context_type="general")
         
         llm = LLMService()
         result = await llm.fetch_completion(enhanced_question)
-        
-        # Проверяем ответ на соответствие этическим принципам
+
         conscience_check = conscience_service.conscience_check(result, f"RAG ответ для пользователя {user_id}")
         if not conscience_check:
             log.warning(f"RAG ответ не прошел проверку Conscience IQ для пользователя {user_id}")
