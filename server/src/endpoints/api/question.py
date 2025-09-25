@@ -49,9 +49,8 @@ async def question_logic(question: str, user_id: Optional[str] = None):
             "source": "stop_command"
         }
 
-    active_scenario = scenario_service.get_user_scenario_state(user_id)
-    
-    if active_scenario:
+    # Проверяем если пользователь в состоянии ожидания согласия или активного сценария
+    if user_id in scenario_service.consent_pending or scenario_service.get_user_scenario_state(user_id):
         scenario_response = await scenario_service.process_user_response(user_id, question)
         if scenario_response:
             log.info(f"Размер ответа сценария: {len(scenario_response)} символов")
@@ -64,11 +63,19 @@ async def question_logic(question: str, user_id: Optional[str] = None):
 
             updated_scenario = scenario_service.get_user_scenario_state(user_id)
             is_completed = updated_scenario and updated_scenario.state.value == "completed"
-            
+
+            # Определяем название сценария
+            if updated_scenario:
+                scenario_name = updated_scenario.scenario_name
+            elif user_id in scenario_service.consent_pending:
+                scenario_name = scenario_service.consent_pending[user_id]
+            else:
+                scenario_name = "unknown"
+
             response_data = {
                 "response": scenario_response,
                 "scenario_active": True,
-                "scenario_name": active_scenario.scenario_name,
+                "scenario_name": scenario_name,
                 "user_id": user_id,
                 "source": "scenario"
             }
@@ -76,7 +83,7 @@ async def question_logic(question: str, user_id: Optional[str] = None):
             if is_completed:
                 response_data["scenario_completed"] = True
                 scenario_service.cleanup_completed_scenario(user_id)
-            
+
             return response_data
 
     scenario_name = await scenario_service.detect_scenario_trigger(question)

@@ -17,6 +17,7 @@ class ScenarioService:
         self.llm_service = LLMService()
         self.conscience_service = ConscienceIQService()
         self.active_scenarios: Dict[str, UserScenario] = {}
+        self.consent_pending: Dict[str, str] = {}
         self.scenario_configs = self._load_scenarios()
         self.prompts = self._load_prompts()
     
@@ -55,7 +56,6 @@ class ScenarioService:
             return {}
     
     async def detect_scenario_trigger(self, user_message: str) -> Optional[str]:
-        # Проверяем триггер для vegans
         vegans_prompt = self.prompts.get('trigger_prompt_vegans', '').format(user_message=user_message)
         try:
             result = await self.llm_service.fetch_completion(vegans_prompt)
@@ -64,7 +64,6 @@ class ScenarioService:
         except Exception as e:
             log.warning(f"Ошибка при определении триггера vegans: {e}")
 
-        # Проверяем триггер для employee
         employee_prompt = self.prompts.get('trigger_prompt_employee', '').format(user_message=user_message)
         try:
             result = await self.llm_service.fetch_completion(employee_prompt)
@@ -78,29 +77,66 @@ class ScenarioService:
     def start_scenario(self, user_id: str, scenario_name: str) -> str:
         if scenario_name not in self.scenario_configs:
             return f"Scenario {scenario_name} not found"
-        
-        questions_text = self.scenario_configs[scenario_name]
-        questions = [QuestionState(question=q) for q in questions_text]
-        
-        scenario = UserScenario(
-            scenario_name=scenario_name,
-            state=ScenarioState.IN_PROGRESS,
-            current_question_index=0,
-            questions=questions
-        )
-        
-        self.active_scenarios[user_id] = scenario
-        
-        log.info(f"Запущен сценарий {scenario_name} для пользователя {user_id}")
 
-        return self._get_next_question_prompt(user_id)
+        self.consent_pending[user_id] = scenario_name
+
+        if scenario_name == "vegans":
+            return self.prompts.get('ask_first_question_vegans', '')
+        elif scenario_name == "employee":
+            return self.prompts.get('ask_first_question_employee', '')
+        else:
+            return f"Unknown scenario: {scenario_name}"
     
+    async def _process_consent_response(self, user_id: str, user_response: str) -> str:
+        scenario_name = self.consent_pending[user_id]
+
+        consent_prompt = self.prompts.get('check_user_consent', '').format(answer=user_response)
+
+        try:
+            consent_result = await self.llm_service.fetch_completion(consent_prompt)
+
+            if "AGREED" in consent_result:
+                del self.consent_pending[user_id]
+
+                questions = [QuestionState(q) for q in self.scenario_configs[scenario_name]]
+                user_scenario = UserScenario(
+                    scenario_name=scenario_name,
+                    questions=questions,
+                    state=ScenarioState.AWAITING_ANSWER,
+                    current_question_index=0
+                )
+                self.active_scenarios[user_id] = user_scenario
+
+                if scenario_name == "vegans":
+                    continue_prompt = self.prompts.get('continue_with_assessment_vegans', '')
+                elif scenario_name == "employee":
+                    continue_prompt = self.prompts.get('continue_with_assessment_employee', '')
+                else:
+                    continue_prompt = self.prompts.get('ask_question', '')
+
+                first_question = user_scenario.questions[0].question
+                return continue_prompt.format(question=first_question)
+
+            elif "DECLINED" in consent_result:
+                del self.consent_pending[user_id]
+                return self.prompts.get('user_declined_assessment', '')
+
+            else:
+                return self.prompts.get('clarify_consent_answer', '')
+
+        except Exception as e:
+            log.warning(f"Ошибка при обработке согласия: {e}")
+            return self.prompts.get('clarify_consent_answer', '')
+
     async def process_user_response(self, user_id: str, user_response: str) -> str:
+        if user_id in self.consent_pending:
+            return await self._process_consent_response(user_id, user_response)
+
         if user_id not in self.active_scenarios:
             return None
-            
+
         scenario = self.active_scenarios[user_id]
-        
+
         if scenario.state != ScenarioState.AWAITING_ANSWER:
             return None
         
@@ -133,7 +169,6 @@ class ScenarioService:
                 return self._get_clarification_prompt(current_question.question, user_response, scenario.scenario_name)
     
     async def _evaluate_answer_quality(self, question: str, answer: str, scenario_name: str = None) -> bool:
-        # Для employee опроса используем специальный промпт для Likert шкалы
         if scenario_name == "employee":
             base_prompt = self.prompts.get('evaluate_answer_quality_employee', '').format(
                 question=question,
@@ -145,7 +180,6 @@ class ScenarioService:
                 answer=answer
             )
 
-        # Используем Conscience IQ для этичной оценки ответов
         enhanced_prompt = self.conscience_service.get_enhanced_prompt(
             base_prompt, context_type="scenario"
         )
@@ -162,14 +196,8 @@ class ScenarioService:
         current_question = scenario.questions[scenario.current_question_index]
         
         scenario.state = ScenarioState.AWAITING_ANSWER
-        
-        # Для первого вопроса сценариев используем специальные промпты с инструкциями
-        if scenario.scenario_name == "vegans" and scenario.current_question_index == 0:
-            prompt_template = self.prompts.get('ask_first_question_vegans', '')
-        elif scenario.scenario_name == "employee" and scenario.current_question_index == 0:
-            prompt_template = self.prompts.get('ask_first_question_employee', '')
-        else:
-            prompt_template = self.prompts.get('ask_question', '')
+
+        prompt_template = self.prompts.get('ask_question', '')
             
         return prompt_template.format(question=current_question.question)
     
@@ -273,6 +301,10 @@ class ScenarioService:
             scenario_name = self.active_scenarios[user_id].scenario_name
             del self.active_scenarios[user_id]
             log.info(f"Сценарий {scenario_name} остановлен по команде пользователя {user_id}")
+            return "Survey stopped. The next time you start, it will begin from the first question."
+        elif user_id in self.consent_pending:
+            del self.consent_pending[user_id]
+            log.info(f"Процесс согласия остановлен по команде пользователя {user_id}")
             return "Survey stopped. The next time you start, it will begin from the first question."
         else:
             return "There is currently no active survey to stop."
