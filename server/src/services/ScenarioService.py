@@ -99,23 +99,38 @@ class ScenarioService:
                 del self.consent_pending[user_id]
 
                 questions = [QuestionState(q) for q in self.scenario_configs[scenario_name]]
-                user_scenario = UserScenario(
-                    scenario_name=scenario_name,
-                    questions=questions,
-                    state=ScenarioState.AWAITING_ANSWER,
-                    current_question_index=0
-                )
-                self.active_scenarios[user_id] = user_scenario
 
                 if scenario_name == "vegans":
-                    continue_prompt = self.prompts.get('continue_with_assessment_vegans', '')
+                    user_scenario = UserScenario(
+                        scenario_name=scenario_name,
+                        questions=questions,
+                        state=ScenarioState.BIOMETRIC_BASELINE_1,
+                        current_question_index=0
+                    )
+                    self.active_scenarios[user_id] = user_scenario
+                    return self.prompts.get('biometric_baseline_1_vegans', '')
                 elif scenario_name == "employee":
+                    user_scenario = UserScenario(
+                        scenario_name=scenario_name,
+                        questions=questions,
+                        state=ScenarioState.AWAITING_ANSWER,
+                        current_question_index=0
+                    )
+                    self.active_scenarios[user_id] = user_scenario
                     continue_prompt = self.prompts.get('continue_with_assessment_employee', '')
+                    first_question = user_scenario.questions[0].question
+                    return continue_prompt.format(question=first_question)
                 else:
+                    user_scenario = UserScenario(
+                        scenario_name=scenario_name,
+                        questions=questions,
+                        state=ScenarioState.AWAITING_ANSWER,
+                        current_question_index=0
+                    )
+                    self.active_scenarios[user_id] = user_scenario
                     continue_prompt = self.prompts.get('ask_question', '')
-
-                first_question = user_scenario.questions[0].question
-                return continue_prompt.format(question=first_question)
+                    first_question = user_scenario.questions[0].question
+                    return continue_prompt.format(question=first_question)
 
             elif "DECLINED" in consent_result:
                 del self.consent_pending[user_id]
@@ -137,7 +152,39 @@ class ScenarioService:
 
         scenario = self.active_scenarios[user_id]
 
-        if scenario.state != ScenarioState.AWAITING_ANSWER:
+        if scenario.scenario_name == "vegans":
+            if scenario.state == ScenarioState.BIOMETRIC_BASELINE_1:
+                if user_response.lower().strip() == "done":
+                    scenario.state = ScenarioState.BIOMETRIC_BASELINE_2
+                    return self.prompts.get('biometric_baseline_2_vegans', '')
+                else:
+                    return "Please type 'Done' when you have finished the 30-second baseline recording."
+
+            elif scenario.state == ScenarioState.BIOMETRIC_BASELINE_2:
+                if user_response.lower().strip() == "done":
+                    scenario.state = ScenarioState.AWAITING_ANSWER
+                    baseline_complete = self.prompts.get('baseline_complete_vegans', '')
+                    first_question = scenario.questions[0].question
+                    continue_prompt = self.prompts.get('continue_with_assessment_vegans', '').format(question=first_question)
+                    return f"{baseline_complete}\n\n{continue_prompt}"
+                else:
+                    return "Please type 'Done' when you have finished the 30-second baseline recording."
+
+            elif scenario.state == ScenarioState.AWAITING_AGENT_MODE_RESPONSE:
+                response_lower = user_response.lower().strip()
+                if any(keyword in response_lower for keyword in ["online", "support", "groups", "communities", "1"]):
+                    scenario.state = ScenarioState.COMPLETED
+                    return self.prompts.get('agent_mode_response_vegans', '')
+                elif any(keyword in response_lower for keyword in ["local", "region", "2"]):
+                    scenario.state = ScenarioState.COMPLETED
+                    return self.prompts.get('agent_mode_response_vegans', '')
+                elif any(keyword in response_lower for keyword in ["skip", "no", "private", "3"]):
+                    scenario.state = ScenarioState.COMPLETED
+                    return "Thank you for completing the assessment. Your results will remain private. Feel free to reach out if you need any assistance in the future!"
+                else:
+                    return "Please choose one of the options:\n1. Search for online support groups\n2. Search for local groups in your region\n3. Skip this step and keep results private"
+
+        if scenario.state not in [ScenarioState.AWAITING_ANSWER, ScenarioState.AWAITING_AGENT_MODE_RESPONSE]:
             return None
         
         current_question = scenario.questions[scenario.current_question_index]
@@ -213,13 +260,11 @@ class ScenarioService:
     
     async def _complete_scenario(self, user_id: str) -> str:
         scenario = self.active_scenarios[user_id]
-        scenario.state = ScenarioState.COMPLETED
 
         answers_summary = ""
         for i, q in enumerate(scenario.questions):
             answers_summary += f"Question {i+1}: {q.question}\nAnswer: {q.answer or 'Not received'}\n\n"
 
-        # Для employee используем специальный промпт
         if scenario.scenario_name == "employee":
             base_prompt = self.prompts.get('generate_final_plan_employee', '').format(
                 scenario_name=scenario.scenario_name,
@@ -230,35 +275,42 @@ class ScenarioService:
                 scenario_name=scenario.scenario_name,
                 answers_summary=answers_summary
             )
-        
-        # Используем Conscience IQ для создания этичного и персонализированного плана
+
         enhanced_prompt = self.conscience_service.get_enhanced_prompt(
             base_prompt, context_type="plan"
         )
-        
+
         try:
             log.info(f"Генерируем финальный план для пользователя {user_id} с учетом Conscience IQ")
             scenario.final_summary = await self.llm_service.fetch_completion(enhanced_prompt)
-            
-            # Проверяем план на соответствие этическим принципам
+
             if scenario.final_summary and scenario.final_summary.strip():
                 conscience_check = self.conscience_service.conscience_check(
                     scenario.final_summary, f"План перехода на вегетарианство для пользователя {user_id}"
                 )
-                
+
                 if conscience_check:
                     log.info(f"Финальный план прошел проверку Conscience IQ для пользователя {user_id}")
+                    if scenario.scenario_name == "vegans":
+                        scenario.state = ScenarioState.AWAITING_AGENT_MODE_RESPONSE
+                    else:
+                        scenario.state = ScenarioState.COMPLETED
                     return scenario.final_summary
                 else:
                     log.warning(f"Финальный план не прошел проверку Conscience IQ для пользователя {user_id}")
-                    # Возвращаем план, но логируем предупреждение
+                    if scenario.scenario_name == "vegans":
+                        scenario.state = ScenarioState.AWAITING_AGENT_MODE_RESPONSE
+                    else:
+                        scenario.state = ScenarioState.COMPLETED
                     return scenario.final_summary
             else:
                 log.error(f"Финальный план пуст для пользователя {user_id}")
+                scenario.state = ScenarioState.COMPLETED
                 return "Unfortunately, it was not possible to create a personalized plan. Please try again later or request general recommendations for vegetarianism."
-                
+
         except Exception as e:
             log.error(f"Ошибка при генерации финального плана для {user_id}: {str(e)}")
+            scenario.state = ScenarioState.COMPLETED
             if scenario.scenario_name == "employee":
                 return self.prompts.get('error_complete_scenario_employee', '')
             else:

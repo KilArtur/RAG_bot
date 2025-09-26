@@ -45,47 +45,36 @@ evaluate_answer_quality_employee: |
   Answer only "YES" if the answer is a valid Likert scale response (1-7), or "NO" if you need to ask again.
 
 generate_final_plan: |
-  Analyze the user's DARI (Dietary Adaptation Readiness Index) assessment and create a personalized vegan transition plan.
-  You need to very briefly instruct the user and not give him a 3-step reasoning, and then offer a diet for the user. Here is one answer option: 
-  "Your CIQ score is 4.8/10, which shows you may be under some stress right now. That doesn’t mean you can’t make good choices — it just means it’s best to go step by step and make sure you feel supported."
+  Create a biometric feedback report for the user's Conscience IQ (CIQ) assessment following this exact format:
 
-  Scenario: {scenario_name}
-
-  User's DARI scale responses (1-7 scale):
+  User's responses (1-7 scale):
   {answers_summary}
 
-  IMPORTANT: Calculate and interpret the DARI score according to the framework:
+  IMPORTANT: Follow this exact structure:
 
-  **STEP 1 - REVERSE SCORING:**
-  Question 3 (Item 8): RS = 8 - raw score (reverse score the temporal sacrifice question)
+  Thank you for completing the session. Here is your biometric feedback.
 
-  **STEP 2 - CALCULATE SUBSCALE SCORES (0-100):**
-  - TA (Temporal Agency): Questions 1, 2 - future orientation
-  - MR (Moral Reasoning): Question 4 - ethical consistency
-  - NA (Negative Affect): Question 5 - emotional regulation
-  - CF (Cognitive Flexibility): Question 3 (reversed) - adaptability
-  - PC (Post-Revision Consolidation): Not assessed in short version
-  - VA (Value Adherence): Not assessed in short version
+  (Questionnaire has hidden details behind drop down menus)
 
-  **STEP 3 - OVERALL ASSESSMENT:**
-  Determine readiness level based on responses:
-  - High readiness (most responses 5-7): Strong likelihood of successful transition
-  - Moderate readiness (mixed responses): Manageable transition with support
-  - Low readiness (most responses 1-3): Consider staged approach
+  For each question, show:
+  Q[number]. [Insert the actual question text from answers_summary]
+  ▾ View biometric insights
+  [Generate realistic biometric data based on the user's response (1-7 scale)]
+  Interpretation: [Provide meaningful interpretation based on the response]
 
-  **CREATE PERSONALIZED PLAN:**
+  **Biometric data generation rules:**
+  - For responses 1-2 (low): Show signs of stress/discomfort (higher pupil dilation, irregular HRV, changes in blink rate)
+  - For responses 3-4 (neutral): Show balanced/neutral biometric readings
+  - For responses 5-7 (high): Show positive engagement (stable readings, positive HRV, focused attention)
 
-  1. **STEP-BY-STEP IMPLEMENTATION:**
-     - Week 1-2: Initial changes based on readiness
-     - Week 3-4: Progressive implementation
-     - Month 2+: Long-term sustainability
+  **After all questions, end with:**
+  I can now use Agent Mode to safely browse the internet and identify support groups, resources, or communities that align with your results.
+  Would you like me to:
+  Search for online support groups (forums, guided programs, communities).
+  Search for local groups in your region.
+  Or skip this step for now?
 
-  2. **SUPPORT RECOMMENDATIONS:**
-     - Address identified weak areas
-     - Suggest specific resources and techniques
-     - Monitor and adjustment strategies
-
-  The response should be in English, evidence-based, and practical for real-world implementation.
+  The response should be in English and follow the exact format from the template.
 
 error_complete_scenario: |
   Unfortunately, an error occurred while creating a personalized plan.
@@ -197,11 +186,27 @@ user_declined_assessment: |
 
 continue_with_assessment_vegans: |
   Great! Let's begin your personalized CIQ assessment. I'll ask you 5 questions to evaluate your readiness for dietary transition.
-  
+
   How strongly do you feel about this? Choose a number from 1 (not at all) to 7 (very strongly).
   If you want to exit the survey, write "stop survey".
 
   {question}
+
+biometric_baseline_1_vegans: |
+  For the first 30 seconds, think consecutively about something you like, and something you've achieved.
+  Biometric baseline recording in progress...
+
+  Let me know once you're done
+
+biometric_baseline_2_vegans: |
+  For the next 30 seconds, think consecutively about something you don't like, and something you're hoping to achieve.
+  Biometric baseline recording in progress...
+
+  Let me know once you're done
+
+baseline_complete_vegans: |
+  Thank you, this was to establish a baseline.
+  Now let's begin the questionnaire.
 
 continue_with_assessment_employee: |
   Perfect! Let's start your weekly Conscience IQ check-in. This assessment will help evaluate your current cognitive load.
@@ -249,3 +254,27 @@ check_user_consent: |
   - Responses that don't clearly indicate yes or no
 
   Answer only "AGREED", "DECLINED", or "UNCLEAR".
+
+agent_mode_response_vegans: |
+  Based on your responses and biometric feedback, here are some support options you can explore right away:
+
+  🔹 **Option 1: Online Stress & Wellbeing Communities**
+  • 7 Cups (Free Online Emotional Support)
+  • Reddit – r/stress
+  • Reddit – r/decidingtobebetter
+  Global, 24/7 peer support and stress-management discussions.
+
+  🔹 **Option 2: Professional Coaching & Mentorship**
+  • BetterUp Coaching
+  • Coach.me
+  Structured work-life balance, accountability, and personal growth coaching.
+
+  🔹 **Option 3: Local Wellness & Support Circles**
+  • Meetup – Wellness Groups
+  • Meetup – Stress Relief & Mindfulness
+  Small group meetups and accountability communities near you.
+
+  Would you like me to:
+  1. Save these links for future sessions,
+  2. Search for more tailored groups (e.g., stress relief, goal motivation, career growth),
+  3. Or stop here and keep your results private?
