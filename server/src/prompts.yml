@@ -9,7 +9,10 @@ ask_first_question_vegans: |
   Would you like to continue?
 
 ask_first_question_employee: |
-  Hi 👋 It's time for your weekly Conscience IQ check-in. This will only take a few minutes. Ready to begin?
+  Great. We'll run a quick Conscience IQ (CIQ) session — it takes about 2–3 minutes.
+  It uses your answers plus optional biometrics (blink rate, pupil dilation, HRV via wearable, and response speed).
+  🔒 Your data is private and only used to personalize support.
+  Would you like to begin?
 
 clarify_answer: |
   Please provide only a number from 1 to 7 according to the scale instructions in the question.
@@ -111,42 +114,34 @@ trigger_prompt_employee: |
   Answer only "YES" if the user wants cognitive load assessment, or "NO" if they did not express this desire.
 
 generate_final_plan_employee: |
-  Analyze the user's cognitive load assessment results and provide practical recommendations for reducing psychological and mental load.
+  Create a biometric feedback report for the user's workplace Conscience IQ (CIQ) session following this exact format:
 
-  Scenario: {scenario_name}
-
-  User's Likert scale responses (1-7 scale, last 5 days):
+  User's responses (1-7 scale):
   {answers_summary}
 
-  IMPORTANT: Analyze responses following the Cognitive Load Detection Framework methodology:
-  - Questions 1-10: Work load (Work subscale)
-  - Questions 11-20: Home load (Home subscale)
-  - Baseline questions (odd numbers): low scores indicate high load
-  - Trigger questions (even numbers): high scores indicate high load
+  IMPORTANT: Follow this exact structure:
 
-  Create a personalized analysis and recommendations:
+  Thank you for completing this session. Here is your combined feedback:
 
-  1. **COGNITIVE LOAD ASSESSMENT:**
-     - Analyze work load (questions 1-10)
-     - Analyze home load (questions 11-20)
-     - Determine overall load level: low/medium/high
+  For each question, show:
+  Q[number]. [Workplace CIQ Question - Insert the actual question text from answers_summary]
+  ▾ View biometric insights
+  [Generate realistic biometric data based on the user's response (1-7 scale)]
+  Interpretation: [Provide meaningful workplace-focused interpretation]
 
-  2. **IDENTIFIED PROBLEM AREAS:**
-     - Specify concrete areas with increased load
-     - Explain the connection between responses and real problems
+  **Biometric data generation rules:**
+  - For responses 1-2 (low): Show signs of stress/cognitive load (higher pupil dilation, irregular HRV, changes in blink rate)
+  - For responses 3-4 (neutral): Show balanced/neutral biometric readings
+  - For responses 5-7 (high): Show positive engagement (stable readings, positive HRV, focused attention)
 
-  3. **PRACTICAL RECOMMENDATIONS:**
-     - Work load management techniques
-     - Recovery and rest strategies
-     - Efficiency improvement methods
-     - Stress reduction techniques
+  **After all questions, end with:**
+  I can now use Agent Mode to identify supportive resources that align with your profile.
+  Would you like me to:
+  🔹 Search for online support communities
+  🔹 Search for local professional groups
+  🔹 Or skip this step for now
 
-  4. **ACTION PLAN:**
-     - Immediate actions (first 1-2 weeks)
-     - Medium-term changes (1-2 months)
-     - Long-term strategies (3+ months)
-
-  The response should be in English, practical and applicable in real life.
+  The response should be in English and follow the exact format from the template.
 
 error_complete_scenario_employee: |
   Unfortunately, an error occurred while creating a personalized cognitive load analysis.
@@ -222,6 +217,22 @@ continue_with_assessment_employee: |
 
   {question}
 
+biometric_baseline_1_employee: |
+  For the first 30 seconds, think consecutively about something you enjoy and something you've accomplished.
+  (Baseline biometric recording in progress...)
+
+  Please say "Done" when ready.
+
+biometric_baseline_2_employee: |
+  Now, for the next 30 seconds, think consecutively about something you find difficult and something you hope to achieve.
+  (Baseline biometric recording in progress...)
+
+  Please say "Done" when ready.
+
+baseline_complete_employee: |
+  Thank you. This establishes your baseline.
+  Let's start the questionnaire.
+
 clarify_consent_answer: |
   I need to understand whether you'd like to continue with the assessment.
 
@@ -277,4 +288,25 @@ agent_mode_response_vegans: |
   Would you like me to:
   1. Save these links for future sessions,
   2. Search for more tailored groups (e.g., stress relief, goal motivation, career growth),
+  3. Or stop here and keep your results private?
+
+agent_mode_response_employee: |
+  Based on your results, here are some options you can explore right away:
+
+  🔹 **Option 1: Workplace Wellbeing Communities**
+  • 7 Cups – Free online peer support
+  • r/decidingtobebetter – Community for habit and lifestyle improvement
+  • r/worklifebalance – Peer discussions on managing stress and performance
+
+  🔹 **Option 2: Professional Coaching & Mentorship**
+  • BetterUp – Structured workplace coaching
+  • Coach.me – Accountability and personal development coaching
+
+  🔹 **Option 3: Local Circles (via Meetup)**
+  • Wellness & Balance Groups
+  • Stress Relief & Mindfulness Communities
+
+  Would you like me to:
+  1. Save these links for your next session,
+  2. Search for more tailored groups (e.g., motivation, career growth, stress resilience),
   3. Or stop here and keep your results private?

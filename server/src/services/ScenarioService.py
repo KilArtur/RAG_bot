@@ -113,13 +113,11 @@ class ScenarioService:
                     user_scenario = UserScenario(
                         scenario_name=scenario_name,
                         questions=questions,
-                        state=ScenarioState.AWAITING_ANSWER,
+                        state=ScenarioState.BIOMETRIC_BASELINE_1,
                         current_question_index=0
                     )
                     self.active_scenarios[user_id] = user_scenario
-                    continue_prompt = self.prompts.get('continue_with_assessment_employee', '')
-                    first_question = user_scenario.questions[0].question
-                    return continue_prompt.format(question=first_question)
+                    return self.prompts.get('biometric_baseline_1_employee', '')
                 else:
                     user_scenario = UserScenario(
                         scenario_name=scenario_name,
@@ -152,6 +150,7 @@ class ScenarioService:
 
         scenario = self.active_scenarios[user_id]
 
+        # Обработка биометрических этапов для vegans сценария
         if scenario.scenario_name == "vegans":
             if scenario.state == ScenarioState.BIOMETRIC_BASELINE_1:
                 if user_response.lower().strip() == "done":
@@ -183,6 +182,39 @@ class ScenarioService:
                     return "Thank you for completing the assessment. Your results will remain private. Feel free to reach out if you need any assistance in the future!"
                 else:
                     return "Please choose one of the options:\n1. Search for online support groups\n2. Search for local groups in your region\n3. Skip this step and keep results private"
+
+        # Обработка биометрических этапов для employee сценария
+        elif scenario.scenario_name == "employee":
+            if scenario.state == ScenarioState.BIOMETRIC_BASELINE_1:
+                if user_response.lower().strip() == "done":
+                    scenario.state = ScenarioState.BIOMETRIC_BASELINE_2
+                    return self.prompts.get('biometric_baseline_2_employee', '')
+                else:
+                    return "Please say 'Done' when you have finished the 30-second baseline recording."
+
+            elif scenario.state == ScenarioState.BIOMETRIC_BASELINE_2:
+                if user_response.lower().strip() == "done":
+                    scenario.state = ScenarioState.AWAITING_ANSWER
+                    baseline_complete = self.prompts.get('baseline_complete_employee', '')
+                    first_question = scenario.questions[0].question
+                    continue_prompt = self.prompts.get('continue_with_assessment_employee', '').format(question=first_question)
+                    return f"{baseline_complete}\n\n{continue_prompt}"
+                else:
+                    return "Please say 'Done' when you have finished the 30-second baseline recording."
+
+            elif scenario.state == ScenarioState.AWAITING_AGENT_MODE_RESPONSE:
+                response_lower = user_response.lower().strip()
+                if any(keyword in response_lower for keyword in ["online", "support", "communities", "1"]):
+                    scenario.state = ScenarioState.COMPLETED
+                    return self.prompts.get('agent_mode_response_employee', '')
+                elif any(keyword in response_lower for keyword in ["local", "professional", "groups", "2"]):
+                    scenario.state = ScenarioState.COMPLETED
+                    return self.prompts.get('agent_mode_response_employee', '')
+                elif any(keyword in response_lower for keyword in ["skip", "no", "confidential", "3"]):
+                    scenario.state = ScenarioState.COMPLETED
+                    return "Thank you for completing the cognitive load assessment. Your results will remain confidential. Feel free to reach out if you need any workplace support in the future!"
+                else:
+                    return "Please choose one of the options:\n🔹 Search for online support communities\n🔹 Search for local professional groups\n🔹 Skip this step and keep results confidential"
 
         if scenario.state not in [ScenarioState.AWAITING_ANSWER, ScenarioState.AWAITING_AGENT_MODE_RESPONSE]:
             return None
@@ -293,12 +325,16 @@ class ScenarioService:
                     log.info(f"Финальный план прошел проверку Conscience IQ для пользователя {user_id}")
                     if scenario.scenario_name == "vegans":
                         scenario.state = ScenarioState.AWAITING_AGENT_MODE_RESPONSE
+                    elif scenario.scenario_name == "employee":
+                        scenario.state = ScenarioState.AWAITING_AGENT_MODE_RESPONSE
                     else:
                         scenario.state = ScenarioState.COMPLETED
                     return scenario.final_summary
                 else:
                     log.warning(f"Финальный план не прошел проверку Conscience IQ для пользователя {user_id}")
                     if scenario.scenario_name == "vegans":
+                        scenario.state = ScenarioState.AWAITING_AGENT_MODE_RESPONSE
+                    elif scenario.scenario_name == "employee":
                         scenario.state = ScenarioState.AWAITING_AGENT_MODE_RESPONSE
                     else:
                         scenario.state = ScenarioState.COMPLETED
