@@ -106,6 +106,7 @@ trigger_prompt_vegans: |
 trigger_prompt_employee: |
   Based on the user's response, determine whether they express a direct desire to assess their psychological and mental load.
   Expressing desire means they ask to evaluate their cognitive load, mental stress, work-life balance, or ask for help with workload assessment.
+  If a user wrote "I would like to do my weekly check-in" or something similar, immediately return "YES"
   Keywords that indicate this desire: "assess load", "psychological load", "cognitive load", "mental load", "work stress", "burnout", "work-life balance", "evaluate stress", "mental fatigue", "workload assessment".
   If the user just mentions stress without asking for assessment, return "NO".
 
