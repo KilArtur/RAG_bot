@@ -78,7 +78,15 @@ class ScenarioService:
         if scenario_name not in self.scenario_configs:
             return f"Scenario {scenario_name} not found"
 
-        self.consent_pending[user_id] = scenario_name
+        questions = [QuestionState(q) for q in self.scenario_configs[scenario_name]]
+
+        user_scenario = UserScenario(
+            scenario_name=scenario_name,
+            questions=questions,
+            state=ScenarioState.AWAITING_ANSWER,
+            current_question_index=0
+        )
+        self.active_scenarios[user_id] = user_scenario
 
         if scenario_name == "vegans":
             return self.prompts.get('ask_first_question_vegans', '')
@@ -142,9 +150,6 @@ class ScenarioService:
             return self.prompts.get('clarify_consent_answer', '')
 
     async def process_user_response(self, user_id: str, user_response: str) -> str:
-        if user_id in self.consent_pending:
-            return await self._process_consent_response(user_id, user_response)
-
         if user_id not in self.active_scenarios:
             return None
 
@@ -342,7 +347,7 @@ class ScenarioService:
             else:
                 log.error(f"Финальный план пуст для пользователя {user_id}")
                 scenario.state = ScenarioState.COMPLETED
-                return "Unfortunately, it was not possible to create a personalized plan. Please try again later or request general recommendations for vegetarianism."
+                return "Unfortunately, it was not possible to create a personalized plan. Please try again later or request general recommendations for transitioning from vegan to carnivore diet."
 
         except Exception as e:
             log.error(f"Ошибка при генерации финального плана для {user_id}: {str(e)}")
@@ -389,10 +394,6 @@ class ScenarioService:
             scenario_name = self.active_scenarios[user_id].scenario_name
             del self.active_scenarios[user_id]
             log.info(f"Сценарий {scenario_name} остановлен по команде пользователя {user_id}")
-            return "Survey stopped. The next time you start, it will begin from the first question."
-        elif user_id in self.consent_pending:
-            del self.consent_pending[user_id]
-            log.info(f"Процесс согласия остановлен по команде пользователя {user_id}")
             return "Survey stopped. The next time you start, it will begin from the first question."
         else:
             return "There is currently no active survey to stop."

@@ -49,8 +49,8 @@ async def question_logic(question: str, user_id: Optional[str] = None):
             "source": "stop_command"
         }
 
-    # Проверяем если пользователь в состоянии ожидания согласия или активного сценария
-    if user_id in scenario_service.consent_pending or scenario_service.get_user_scenario_state(user_id):
+    # Проверяем если пользователь в активном сценарии
+    if scenario_service.get_user_scenario_state(user_id):
         scenario_response = await scenario_service.process_user_response(user_id, question)
         if scenario_response:
             log.info(f"Размер ответа сценария: {len(scenario_response)} символов")
@@ -67,8 +67,6 @@ async def question_logic(question: str, user_id: Optional[str] = None):
             # Определяем название сценария
             if updated_scenario:
                 scenario_name = updated_scenario.scenario_name
-            elif user_id in scenario_service.consent_pending:
-                scenario_name = scenario_service.consent_pending[user_id]
             else:
                 scenario_name = "unknown"
 

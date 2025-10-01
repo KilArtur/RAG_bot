@@ -3,19 +3,13 @@ ask_question: |
   {question}
 
 ask_first_question_vegans: |
-  I can help. First, I'll personalize advice using your Conscience IQ (CIQ) score—a quick, 2–3 minute check.
-  It uses your responses plus optional biometrics (blink rate, pupil dilation, HRV via wearable, and response speed).
-  • Your data stays private and is used only to tailor support.
-  Would you like to continue?
+  I regularly think about how my choices today will affect my life years from now.
 
 ask_first_question_employee: |
-  Great. We'll run a quick Conscience IQ (CIQ) session — it takes about 2–3 minutes.
-  It uses your answers plus optional biometrics (blink rate, pupil dilation, HRV via wearable, and response speed).
-  🔒 Your data is private and only used to personalize support.
-  Would you like to begin?
+  In the last 5 days, I completed tasks at about the pace I expected.
 
 clarify_answer: |
-  Please provide only a number from 1 to 7 according to the scale instructions in the question.
+  Please provide only a number from 1 to 7.
 
   If you want to stop the survey, write "stop survey".
 
@@ -81,38 +75,44 @@ generate_final_plan: |
 
 error_complete_scenario: |
   Unfortunately, an error occurred while creating a personalized plan.
-            
-  General recommendations for transitioning to vegetarianism:
-  • Start gradually - replace one meat dish per day with a plant-based one
-  • Include legumes (lentils, chickpeas, beans) as a protein source
-  • Add nuts and seeds for healthy fats
-  • Eat a variety of vegetables and fruits
-  • Consider taking vitamin B12 supplements
+
+  General recommendations for transitioning from vegan to carnivore diet:
+  • Start gradually - introduce small amounts of animal products
+  • Begin with easily digestible proteins like fish or eggs
+  • Consider organ meats for nutrient density
+  • Stay hydrated and monitor digestion during transition
+  • Supplement with digestive enzymes if needed during adjustment
   • Consult a doctor before making radical dietary changes
 
   Try requesting a personalized plan later.
 
 trigger_prompt_vegans: |
-  Based on the user's response, determine whether they express a direct desire to become vegetarian, i.e., to give up eating meat.
-  Expressing desire means they write that they want to become vegan or ask to create a plan.
-  If the user asks to talk about veganism, that's not a direct desire. Direct desire is when the user's message can be converted to the sentence "I want to become vegetarian".
-  If the user asks something about vegetarianism, immediately return "NO".
-
+  Based on the user's response, determine whether they express thoughts about switching from vegan to carnivore diet or being done with vegan lifestyle.
+  Look for phrases indicating desire to switch from vegan to carnivore, being done with vegan diet, or wanting to try carnivore.
+  Examples that should trigger "YES":
+  - "Thinking of switching from vegan to carnivore, is that a good idea?"
+  - "I'm done with vegan, want to try carnivore."
+  - "Wanting to take on a new project, is it a good idea?"
+  - Any mention of switching from vegan to carnivore or meat
+  - Being done with vegan lifestyle
 
   User's message: {user_message}
 
-  Answer only "YES" if the answer is suitable, or "NO" if the user did not express a desire to transition to vegetarianism.
+  Answer only "YES" if the user wants to switch from vegan to carnivore, or "NO" if they did not express this desire.
 
 trigger_prompt_employee: |
-  Based on the user's response, determine whether they express a direct desire to assess their psychological and mental load.
-  Expressing desire means they ask to evaluate their cognitive load, mental stress, work-life balance, or ask for help with workload assessment.
-  If a user wrote "I would like to do my weekly check-in" or something similar, immediately return "YES"
-  Keywords that indicate this desire: "assess load", "psychological load", "cognitive load", "mental load", "work stress", "burnout", "work-life balance", "evaluate stress", "mental fatigue", "workload assessment".
-  If the user just mentions stress without asking for assessment, return "NO".
+  Based on the user's response, determine whether they express stress, overwhelm, fatigue, or questions about taking on new work/projects.
+  Look for phrases indicating stress levels, feeling overwhelmed, needing breaks, or considering new projects.
+  Examples that should trigger "YES":
+  - "I got a long week ahead, what are my stress levels?"
+  - "Feeling a bit overwhelmed, do I need a break?"
+  - "Wanting to take on a new project, is it a good idea?"
+  - Any mention of stress, overwhelm, fatigue, workload concerns
+  - Questions about capacity for new work or projects
 
   User's message: {user_message}
 
-  Answer only "YES" if the user wants cognitive load assessment, or "NO" if they did not express this desire.
+  Answer only "YES" if the user expresses stress/overwhelm/project concerns, or "NO" if they did not.
 
 generate_final_plan_employee: |
   Create a biometric feedback report for the user's workplace Conscience IQ (CIQ) session following this exact format:
@@ -164,16 +164,7 @@ error_complete_scenario_employee: |
   Try requesting a personalized analysis later.
 
 clarify_answer_employee: |
-  Please provide only a number from 1 to 7 in response to the statement.
-
-  Rating scale:
-  1 - strongly disagree
-  2 - disagree
-  3 - somewhat disagree
-  4 - neutral
-  5 - somewhat agree
-  6 - agree
-  7 - strongly agree
+  Please provide only a number from 1 to 7.
 
   If you want to exit the survey, write "stop survey".
 
@@ -181,11 +172,6 @@ user_declined_assessment: |
   No problem at all! Have a wonderful day, and I'd be happy to help you at any other convenient time. Feel free to reach out whenever you're ready.
 
 continue_with_assessment_vegans: |
-  Great! Let's begin your personalized CIQ assessment. I'll ask you 5 questions to evaluate your readiness for dietary transition.
-
-  How strongly do you feel about this? Choose a number from 1 (not at all) to 7 (very strongly).
-  If you want to exit the survey, write "stop survey".
-
   {question}
 
 biometric_baseline_1_vegans: |
@@ -205,17 +191,6 @@ baseline_complete_vegans: |
   Now let's begin the questionnaire.
 
 continue_with_assessment_employee: |
-  Perfect! Let's start your weekly Conscience IQ check-in. This assessment will help evaluate your current cognitive load.
-
-  Use the last 5 days as your reference frame. Rate each statement on a scale from 1 to 7, where:
-  1 - strongly disagree
-  2 - disagree
-  3 - somewhat disagree
-  4 - neutral
-  5 - somewhat agree
-  6 - agree
-  7 - strongly agree
-
   {question}
 
 biometric_baseline_1_employee: |
